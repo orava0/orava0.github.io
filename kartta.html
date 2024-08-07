@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kauhava</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+    <style type='text/css'>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+        }
+    </style>
+</head>
+<body>
+    
+    <center>
+    <button onclick="toggleOverlay()"><h3>&nbsp;&nbsp;&nbsp;&nbsp;Suunnistuskartta: päälle/pois&nbsp;&nbsp;&nbsp;&nbsp;</h3></button>
+    </center>
+    
+    <div id='printoutPanel'></div>
+    
+    <div id='myMap' style='width: 100vw; height: 100vh;'></div>
+    
+    <script type='text/javascript'>
+        var map, overlay;
+
+        function loadMapScenario() {
+            map = new Microsoft.Maps.Map(document.getElementById('myMap'), {
+                mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                center: new Microsoft.Maps.Location(63.152165, 23.036955),
+                zoom: 14
+            });
+
+            var img;
+
+            // Define custom constructor for the overlay
+            function TopographicOverlay(bounds, image) {
+                this.bounds = bounds;
+                this.image = image;
+            }
+
+            // set prototype to sub-class CustomOverlay
+            TopographicOverlay.prototype = new Microsoft.Maps.CustomOverlay();
+
+            // implement the onAdd method to set up DOM element, and use setHtmlElement bind it with the overlay
+            TopographicOverlay.prototype.onAdd = function () {
+                img = document.createElement('img');
+                img.src = this.image;
+                img.id = 'topographicOverlay';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.position = 'absolute';
+                
+                // Lisää kuvan kulmaan vinous
+                img.style.transform = 'rotate(9.2deg)';
+
+                this.setHtmlElement(img);
+            };
+
+            // implement the onLoad method to perform custom operations of rendering the DOM element
+            TopographicOverlay.prototype.onLoad = function () {
+                repositionOverlay();
+                Microsoft.Maps.Events.addHandler(map, 'viewchange', function () {
+                    repositionOverlay();
+                });
+            };
+
+            var bounds = Microsoft.Maps.LocationRect.fromCorners(new Microsoft.Maps.Location(63.203530, 22.986300), new Microsoft.Maps.Location(63.137499, 23.094855));
+            var imageSrc = 'Jukola_2024.jpg';            
+
+            // create an instance of the defined custom overlay
+            overlay = new TopographicOverlay(bounds, imageSrc);
+
+            // now we're ready to insert this custom overlay into map layers
+            map.layers.insert(overlay);
+
+            function repositionOverlay() {
+                var topLeft = map.tryLocationToPixel(bounds.getNorthwest(), Microsoft.Maps.PixelReference.control);
+                var bottomRight = map.tryLocationToPixel(bounds.getSoutheast(), Microsoft.Maps.PixelReference.control);
+                if (topLeft && bottomRight) {
+                    img.style.left = topLeft.x + 'px';
+                    img.style.top = topLeft.y + 'px';
+                    img.style.width = (bottomRight.x - topLeft.x) + 'px';
+                    img.style.height = (bottomRight.y - topLeft.y) + 'px';
+                }
+            }
+
+            window.toggleOverlay = function () {
+                var imgElement = document.getElementById('topographicOverlay');
+                imgElement.style.display = (imgElement.style.display === 'none' || imgElement.style.display === '') ? 'block' : 'none';
+            }
+        }
+    </script>
+
+    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AmX_Z4ALEolnNxj-WpO6B3EXxL1C3buFgXTzz1iEQtGHyedY9b-Rs-QOf8YeS_GN&callback=loadMapScenario' async defer></script>
+</body>
+</html>
