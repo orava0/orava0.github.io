@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Jukola 2025 Mikkeli harjoituskieltoalue</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;   /* Poistaa vierityspalkit */
+      }
+
+      #map {
+        height: 100%;
+        width: 100%;
+      }
+
+      input[type="radio"] {
+        width: 30px; /* Aseta haluamasi leveys */
+        height: 30px; /* Aseta haluamasi korkeus */
+        margin: 5px; /* Voit säätää tilaa säilyttääksesi ulkoasun */
+      }
+
+      .overlay-image {
+        position: absolute;
+        transform-origin: center;
+      }
+
+      .coordinates-box {
+        position: absolute;
+        bottom: 30px;
+        left: 10px;
+        z-index: 5;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 5px;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+      }
+
+      /* Muutetaan kerrosvalitsimen fonttikokoa */
+      .layer-selector {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 5;
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 20px;
+      }
+
+      .layer-selector label {
+        font-size: 2em;  /* Asetetaan isompi fonttikoko */
+        font-weight: bold;
+      }
+
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?key="></script>
+    <script>
+      let map;
+      let overlayImage1, overlayImage2, overlayImage3;
+      let isVisible1 = false, isVisible2 = false, isVisible3 = false;
+
+      function initMap() {
+        const mapCenter = { lat: 61.6400, lng: 27.155 };        // Keskipiste kartalle (esimerkiksi Helsingin koordinaatit)
+
+        map = new google.maps.Map(document.getElementById("map"), {         // Määritä Google Maps -kartta ja aseta karttatyyppi roadmapiksi
+          zoom: 15,
+          center: mapCenter,
+          mapTypeId: 'satellite',       // Karttatyyppi voi olla roadmap tai satellite
+          scaleControl: true,           // Näytä mittajana
+        });
+
+
+
+            /* Kun alat asetella karttaa google mapsin päälle, niin määritä ihan ekana kartan kierto. */			
+			/* Kun karttaa on kierretty, niin kun overlay-kuvaa kierretään, niin north, south, east ja west-koordinaatit */
+			/* eivät enää vastaa overlay-kuvan suoria kulmia. Sen sijaan ne vastaavat kuvitteellista suorakulmaista rajaa, */
+			/* joka ympäröi käännettyä kuvaa. Tämä suorakulmainen raja on suurin suorakulmio, joka voidaan piirtää käännetyn 
+			/* kuvan ympärille siten, että se on suorassa kartan koordinaattijärjestelmän kanssa. */
+			
+			/* Sivu näyttää hiiren kohdistimen koordinaatit. Se on apunasi kun iteroit alla olevia koordinaatteja. */
+			/* Katso milloin esim. vasenta reunaa pitää siirtää vasemmalle tai oikealle. Säädä sitten alla olevia koordinaatteja. */
+			/* Minkä tahansa koordinaatin siirtäminen venyttää koko kuvaa ja vaatii aina muidenkin koordinaattien säätöä. */
+			/* Kartan saaminen kohdalleen on siis iteratiivinen prosessi! Aloita se laittamalla kierto kuntoon. */
+			/* Käytä hiiren koordinaatteja apunasi, jolloin on aika helppoa löytää numerot joilla kartta on riittävällä */
+			/* tarkkuudella kohdillaan. */
+
+        createOverlayImage('mapant.png', 1, {
+          north: 61.653784, south: 61.571801, east: 27.205221, west: 27.10644           // Ekana on pohjoisin piste (north), sitten eteläisin piste (South), sitten itäisin piste (East) ja sitten läntisin piste (West).
+        }, 'rotate(10.65deg)');  // rotation for Mapant
+        /* Kartan kierto on rotate-arvossa*/
+        /* Kun alat asetella karttaa google mapsin päälle, niin määritä ihan ekana kartan kierto. */
+	    /* Tee se mahd tarkasti. Etsi pisteet tai linja joka menisi koko kartan lävitse pitkän matkaa */
+		/* alakulmasta vastakkaiseen yläkulmaan.  */
+		/* Laita siis ensin kierto oikein ja ala sitten iteroida kulmapisteiden koordinaatteja alempana. */
+        createOverlayImage('pohjakartta.png', 2, {
+          north: 61.6506, south: 61.5743, east: 27.2042, west: 27.09971
+        }, 'rotate(0deg)');  // rotation for Pohjakartta
+        createOverlayImage('orto.jpg', 3, {
+          north: 61.64887, south: 61.5756902, east: 27.20082, west: 27.1008681			
+        }, 'rotate(0deg)');  // rotation for Ortokuva
+
+        // Näytetään aluksi vain Mapant-kerros
+        toggleOverlay(1);
+
+        // Lisää tapahtumankuuntelija hiiren liikkeitä varten
+        map.addListener('mousemove', (e) => {
+          const coordsBox = document.getElementById('coordinates-box');
+          coordsBox.textContent = `Lat: ${e.latLng.lat().toFixed(5)}, Lng: ${e.latLng.lng().toFixed(5)}`;
+        });
+      }
+
+      function createOverlayImage(src, overlayNumber, bounds, rotateValue) {
+        const overlayImage = new google.maps.OverlayView();
+        overlayImage.onAdd = function() {
+          const layer = document.createElement('div');
+          layer.style.position = 'absolute';
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'overlay-image';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.transform = rotateValue;  // Apply the rotation value here
+          layer.appendChild(img);
+          this.getPanes().overlayLayer.appendChild(layer);
+          this.layer = layer;
+        };
+
+        overlayImage.draw = function() {
+          const overlayProjection = this.getProjection();
+          const sw = overlayProjection.fromLatLngToDivPixel(new google.maps.LatLng(bounds.south, bounds.west));
+          const ne = overlayProjection.fromLatLngToDivPixel(new google.maps.LatLng(bounds.north, bounds.east));
+          const layer = this.layer;
+          layer.style.left = sw.x + 'px';
+          layer.style.top = ne.y + 'px';
+          layer.style.width = (ne.x - sw.x) + 'px';
+          layer.style.height = (sw.y - ne.y) + 'px';
+        };
+
+        overlayImage.onRemove = function() {
+          this.layer.parentNode.removeChild(this.layer);
+          this.layer = null;
+        };
+
+        overlayImage.setMap(map);
+        if (overlayNumber === 1) overlayImage1 = overlayImage;
+        if (overlayNumber === 2) overlayImage2 = overlayImage;
+        if (overlayNumber === 3) overlayImage3 = overlayImage;
+      }
+
+      function toggleOverlay(layerNumber) {
+        overlayImage1.setMap(null);
+        overlayImage2.setMap(null);
+        overlayImage3.setMap(null);
+
+        if (layerNumber === 1) {
+          overlayImage1.setMap(map);
+        } else if (layerNumber === 2) {
+          overlayImage2.setMap(map);
+        } else if (layerNumber === 3) {
+          overlayImage3.setMap(map);
+        }
+      }
+
+      function removeAllOverlays() {
+        overlayImage1.setMap(null);
+        overlayImage2.setMap(null);
+        overlayImage3.setMap(null);
+      }
+    </script>
+  </head>
+  <body onload="initMap()">
+    <div id="map"></div>
+    
+    <!-- Kerrosvalitsin, jossa suuremmat fontit -->
+    <div class="layer-selector">
+      <label><input type="radio" name="overlay" onclick="removeAllOverlays()"> Google</label><br>
+      <label><input type="radio" name="overlay" onclick="toggleOverlay(1)" checked> Mapant</label><br>      
+      <label><input type="radio" name="overlay" onclick="toggleOverlay(2)"> Pohjakartta</label><br>
+      <label><input type="radio" name="overlay" onclick="toggleOverlay(3)"> Ortokuva</label><br>
+    </div>
+
+    <div id="coordinates-box" class="coordinates-box">Lat: , Lng: </div>
+  </body>
+</html>
+
