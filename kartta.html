@@ -58,8 +58,8 @@
     <script src="https://maps.googleapis.com/maps/api/js?key="></script>
     <script>
       let map;
-      let overlayImage1, overlayImage2, overlayImage3;
-      let isVisible1 = false, isVisible2 = false, isVisible3 = false;
+      let overlayImage1, overlayImage2, overlayImage3, overlayImage4;
+      let isVisible1 = false, isVisible2 = false, isVisible3 = false, isVisible4 = false;
 
       function initMap() {
         const mapCenter = { lat: 61.6400, lng: 27.155 };        // Keskipiste kartalle (esimerkiksi Helsingin koordinaatit)
@@ -100,6 +100,9 @@
         createOverlayImage('orto.jpg', 3, {
           north: 61.64887, south: 61.5756902, east: 27.20082, west: 27.1008681			
         }, 'rotate(0deg)');  // rotation for Ortokuva
+        createOverlayImage('1999.jpg', 4, {
+          north: 61.64692, south: 61.62144, east: 27.1750, west: 27.1385
+        }, 'rotate(10.38deg)');  
 
         // Näytetään aluksi vain Mapant-kerros
         toggleOverlay(1);
@@ -147,12 +150,14 @@
         if (overlayNumber === 1) overlayImage1 = overlayImage;
         if (overlayNumber === 2) overlayImage2 = overlayImage;
         if (overlayNumber === 3) overlayImage3 = overlayImage;
+        if (overlayNumber === 4) overlayImage4 = overlayImage;
       }
 
       function toggleOverlay(layerNumber) {
         overlayImage1.setMap(null);
         overlayImage2.setMap(null);
         overlayImage3.setMap(null);
+        overlayImage4.setMap(null);
 
         if (layerNumber === 1) {
           overlayImage1.setMap(map);
@@ -160,6 +165,8 @@
           overlayImage2.setMap(map);
         } else if (layerNumber === 3) {
           overlayImage3.setMap(map);
+        } else if (layerNumber === 4) {
+          overlayImage4.setMap(map);
         }
       }
 
@@ -167,6 +174,7 @@
         overlayImage1.setMap(null);
         overlayImage2.setMap(null);
         overlayImage3.setMap(null);
+        overlayImage4.setMap(null);
       }
     </script>
   </head>
@@ -179,6 +187,7 @@
       <label><input type="radio" name="overlay" onclick="toggleOverlay(1)" checked> Mapant</label><br>      
       <label><input type="radio" name="overlay" onclick="toggleOverlay(2)"> Pohjakartta</label><br>
       <label><input type="radio" name="overlay" onclick="toggleOverlay(3)"> Ortokuva</label><br>
+      <label><input type="radio" name="overlay" onclick="toggleOverlay(4)"> 1999</label><br>
     </div>
 
     <div id="coordinates-box" class="coordinates-box">Lat: , Lng: </div>
