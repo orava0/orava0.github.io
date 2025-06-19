@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Jukola 2026 – valitse karttataso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS ja JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #map { width: 100%; height: 100%; }
+
+    #layerToggle {
+      position: absolute;
+      top: 10px;
+      left: 60px;
+      background: white;
+      z-index: 1000;
+      padding: 6px;
+      font-family: sans-serif;
+      font-size: 15px; /* 🔺 suurennettu yhdellä */
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+<div id="layerToggle">
+  <label><input type="radio" name="layer" value="esri"> Satelliittikuva</label><br>
+  <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label>
+</div>
+
+<div id="map"></div>
+
+<script>
+  const map = L.map('map', {
+    center: [60.5750, 26.8939],
+    zoom: 14,
+    minZoom: 13,
+    maxZoom: 17
+  });
+
+  const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Karttakuva © Esri & contributors',
+    maxZoom: 19
+  });
+
+  const maastoLayer = L.tileLayer('omakartta_tiles/{z}/{x}/{y}.png', {
+    tileSize: 256,
+    minZoom: 1,
+    maxZoom: 17,
+    opacity: 1,
+    tms: true
+  });
+
+  // ✅ Maastokartta oletuskerrokseksi
+  maastoLayer.addTo(map);
+
+  // Lisää mittakaava
+  const scale = L.control.scale({ position: 'bottomright', metric: true, imperial: false });
+  scale.addTo(map);
+
+  document.querySelectorAll('input[name="layer"]').forEach(el => {
+    el.addEventListener('change', () => {
+      [esriLayer, maastoLayer].forEach(layer => {
+        if (map.hasLayer(layer)) map.removeLayer(layer);
+      });
+
+      const valinta = document.querySelector('input[name="layer"]:checked').value;
+      if (valinta === 'esri') {
+        esriLayer.addTo(map);
+      } else if (valinta === 'maasto') {
+        maastoLayer.addTo(map);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
