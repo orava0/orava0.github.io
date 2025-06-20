@@ -33,7 +33,9 @@
   <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
   <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
   <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>
-  <label><input type="radio" name="layer" value="tavastila"> Tavastila</label>
+  <label><input type="radio" name="layer" value="tavastila"> Tavastila</label><br>
+  <label><input type="radio" name="layer" value="peippola"> Peippola</label><br>
+  <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label>
 </div>
 
 <div id="map"></div>
@@ -113,9 +115,11 @@
     } else if (valinta === 'efky1') {
       addEfkyImage('EFKY_1.jpg', 60.57796, 26.8853, 2.12, 2.94, 7.3);
     } else if (valinta === 'efky2') {
-      addEfkyImage('EFKY_2.jpg', 60.58616, 26.87696, 2.83, 4.09, 7.3);
+      addEfkyImage('EFKY_2.jpg', 60.58616, 26.87696, 2.83, 4.09, 7.3);    
     } else if (valinta === 'tavastila') {
       addEfkyImage('Tavastila.jpg', 60.57469, 26.93866, 2.00, 2.93, 7.5);
+    } else if (valinta === 'kirkkovuoret') {
+      addEfkyImage('Kirkkovuoret.jpg', 60.60961, 26.90236, 2.96, 2.12, 8.7);
     }
   }
 
@@ -125,7 +129,9 @@
 
   map.on('zoomend moveend', () => {
     const valinta = document.querySelector('input[name="layer"]:checked').value;
-    if (valinta.startsWith('efky') || valinta === 'tavastila') updateLayers();
+    if (valinta.startsWith('efky') || valinta === 'tavastila' || valinta === 'peippola' || valinta === 'kirkkovuoret') {
+      updateLayers();
+    }
   });
 
   // ✅ Asetetaan maastokartta päälle oletuksena myös toiminnallisesti
