@@ -21,7 +21,7 @@
       z-index: 1000;
       padding: 6px;
       font-family: sans-serif;
-      font-size: 18px; /* 🔺 suurennettu yhdellä */
+      font-size: 21px;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
   </style>
@@ -29,8 +29,11 @@
 <body>
 
 <div id="layerToggle">
-  <label><input type="radio" name="layer" value="esri"> Satelliittikuva</label><br>
-  <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label>
+  <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
+  <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
+  <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
+  <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>
+  <label><input type="radio" name="layer" value="tavastila"> Tavastila</label>
 </div>
 
 <div id="map"></div>
@@ -47,6 +50,7 @@
     attribution: 'Karttakuva © Esri & contributors',
     maxZoom: 19
   });
+  esriLayer.addTo(map); // Satelliittikuva pysyvästi taustalle
 
   const maastoLayer = L.tileLayer('omakartta_tiles/{z}/{x}/{y}.png', {
     tileSize: 256,
@@ -56,27 +60,76 @@
     tms: true
   });
 
-  // ✅ Maastokartta oletuskerrokseksi
-  maastoLayer.addTo(map);
+  let efkyOverlay = null;
 
-  // Lisää mittakaava
-  const scale = L.control.scale({ position: 'bottomright', metric: true, imperial: false });
-  scale.addTo(map);
+  function addEfkyImage(src, lat, lon, widthKm, heightKm, angleDeg) {
+    removeEfkyOverlay();
+
+    const latlng = L.latLng(lat, lon);
+    const center = map.latLngToLayerPoint(latlng);
+
+    const kmToPx = (km) => {
+      const p1 = map.latLngToLayerPoint(latlng);
+      const p2 = map.latLngToLayerPoint(L.latLng(lat + (km / 111.32), lon));
+      return Math.abs(p2.y - p1.y);
+    };
+
+    const widthPx = kmToPx(widthKm);
+    const heightPx = kmToPx(heightKm);
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.position = 'absolute';
+    img.style.width = `${widthPx}px`;
+    img.style.height = `${heightPx}px`;
+    img.style.left = `${center.x - widthPx / 2}px`;
+    img.style.top = `${center.y - heightPx / 2}px`;
+    img.style.transform = `rotate(${angleDeg}deg)`;
+    img.style.transformOrigin = 'center center';
+    img.style.opacity = '1.0';
+    img.style.pointerEvents = 'none';
+    img.style.zIndex = '999';
+    img.style.mixBlendMode = 'normal';
+
+    efkyOverlay = img;
+    map.getPanes().overlayPane.appendChild(img);
+  }
+
+  function removeEfkyOverlay() {
+    if (efkyOverlay && efkyOverlay.parentNode) {
+      efkyOverlay.parentNode.removeChild(efkyOverlay);
+      efkyOverlay = null;
+    }
+  }
+
+  function updateLayers() {
+    map.removeLayer(maastoLayer);
+    removeEfkyOverlay();
+
+    const valinta = document.querySelector('input[name="layer"]:checked').value;
+
+    if (valinta === 'maasto') {
+      maastoLayer.addTo(map);
+    } else if (valinta === 'efky1') {
+      addEfkyImage('EFKY_1.jpg', 60.57796, 26.8853, 2.12, 2.94, 7.3);
+    } else if (valinta === 'efky2') {
+      addEfkyImage('EFKY_2.jpg', 60.58616, 26.87696, 2.83, 4.09, 7.3);
+    } else if (valinta === 'tavastila') {
+      addEfkyImage('Tavastila.jpg', 60.57469, 26.93866, 2.00, 2.93, 7.5);
+    }
+  }
 
   document.querySelectorAll('input[name="layer"]').forEach(el => {
-    el.addEventListener('change', () => {
-      [esriLayer, maastoLayer].forEach(layer => {
-        if (map.hasLayer(layer)) map.removeLayer(layer);
-      });
-
-      const valinta = document.querySelector('input[name="layer"]:checked').value;
-      if (valinta === 'esri') {
-        esriLayer.addTo(map);
-      } else if (valinta === 'maasto') {
-        maastoLayer.addTo(map);
-      }
-    });
+    el.addEventListener('change', updateLayers);
   });
+
+  map.on('zoomend moveend', () => {
+    const valinta = document.querySelector('input[name="layer"]:checked').value;
+    if (valinta.startsWith('efky') || valinta === 'tavastila') updateLayers();
+  });
+
+  // ✅ Asetetaan maastokartta päälle oletuksena myös toiminnallisesti
+  maastoLayer.addTo(map);
 </script>
 
 </body>
