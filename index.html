@@ -24,28 +24,56 @@
       font-size: 18px;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
+    
+    #mouseCoords {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      font-family: sans-serif;
+      font-size: 14px;
+      padding: 4px 10px;
+      z-index: 1000;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
+
+<!-- Jos alta poistaa kommentoinnin, niin alareunaan saa nakyville koordinaatit. -->
+<!-- <div id="mouseCoords">Koordinaatit: </div> -->
 
 <div id="layerToggle">
   <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
   <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
   <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
   <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>
+  <label><input type="radio" name="layer" value="efky3"> Kymin lentokenttä 3</label><br>
+  <label><input type="radio" name="layer" value="efky4"> Kymin lentokenttä 4</label><br>
   <label><input type="radio" name="layer" value="tavastila"> Tavastila</label><br>
   <label><input type="radio" name="layer" value="peippola"> Peippola</label><br>
-  <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label>
+  <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label><br>
+  <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi</label><br>
+  <label><input type="radio" name="layer" value="kooste"> Kooste</label>
 </div>
 
 <div id="map"></div>
 
 <script>
+	
   const map = L.map('map', {
     center: [60.5750, 26.8939],
     zoom: 14,
     minZoom: 13,
     maxZoom: 17
+  });
+
+
+  map.on('mousemove', function(e) {
+    const lat = e.latlng.lat.toFixed(5);
+    const lng = e.latlng.lng.toFixed(5);
+    document.getElementById('mouseCoords').textContent = `Koordinaatit: ${lat}, ${lng}`;
   });
 
   const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -110,6 +138,14 @@
 
     const valinta = document.querySelector('input[name="layer"]:checked').value;
 
+	// TEE KARTTOJEN KOHDISTAMINEN OMALLA Leaflet-KARTAN KOHDISTUSTYOKALULLANI! 
+	
+	// Alla numerot jarjestyksessa:
+	// Kuvan keskikohdan leveyspiiri (latitude), asteina.
+	// Kuvan keskikohdan pituuspiiri (longitude), asteina.
+	// Kuvan leveys kilometreinä kartalla.
+	// Kuvan korkeus kilometreinä kartalla.
+	// Kuvan kierto kulma-asteina, myötäpäivään.
     if (valinta === 'maasto') {
       maastoLayer.addTo(map);
     } else if (valinta === 'efky1') {
@@ -122,6 +158,14 @@
       addEfkyImage('Peippola.jpg', 60.56246, 26.91016, 2.10, 3.00, 7.7);
     } else if (valinta === 'kirkkovuoret') {
       addEfkyImage('Kirkkovuoret.jpg', 60.60961, 26.90236, 2.96, 2.12, 8.7);
+    } else if (valinta === 'saarijarvi') {
+      addEfkyImage('Saarijarvi.jpg', 60.60056, 26.89086, 8.48, 6.03, 5.1);
+    } else if (valinta === 'efky3') {
+      addEfkyImage('EFKY_3.jpg', 60.55766, 26.90186, 6.52, 9.21, 5.2); 
+    } else if (valinta === 'efky4') {
+      addEfkyImage('EFKY_4.jpg', 60.55766, 26.90186, 6.52, 9.21, 5.2); 
+    } else if (valinta === 'kooste') {
+      addEfkyImage('Kooste.jpg', 60.58706, 26.88556, 8.25, 11.97, 8.4);
     }
   }
 
@@ -131,7 +175,7 @@
 
   map.on('zoomend moveend', () => {
     const valinta = document.querySelector('input[name="layer"]:checked').value;
-    if (valinta.startsWith('efky') || valinta === 'tavastila' || valinta === 'peippola' || valinta === 'kirkkovuoret') {
+    if (valinta.startsWith('efky') || valinta === 'tavastila' || valinta === 'peippola' || valinta === 'kirkkovuoret' || valinta === 'saarijarvi' || valinta === 'kooste') {
       updateLayers();
     }
   });
