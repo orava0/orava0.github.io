@@ -47,15 +47,16 @@
 <div id="layerToggle">
   <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
   <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
+  <label><input type="radio" name="layer" value="esijukola"> Esi-Jukola</label><br>
   <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
   <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>  
   <label><input type="radio" name="layer" value="tavastila"> Tavastila</label><br>
   <label><input type="radio" name="layer" value="peippola"> Peippola</label><br>
   <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label><br>
-  <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi</label><br>
+  <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi, 1986</label><br>
   <label><input type="radio" name="layer" value="kooste"> Kooste</label><br>
-  <label><input type="radio" name="layer" value="1986"> 1986</label><br>  
-  <label><input type="radio" name="layer" value="1975"> 1975</label>
+  <label><input type="radio" name="layer" value="1986"> Fin 5, 1986</label><br>
+  <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label>
 </div>
 
 <div id="map"></div>
@@ -148,6 +149,8 @@
 	// Kuvan kierto kulma-asteina, myötäpäivään.
     if (valinta === 'maasto') {
       maastoLayer.addTo(map);
+    } else if (valinta === 'esijukola') {
+      addEfkyImage('EsiJukola.jpg', 60.56836, 26.92413, 3.48, 3.015, 11.2);
     } else if (valinta === 'efky1') {
       addEfkyImage('EFKY_1.jpg', 60.57796, 26.8853, 2.12, 2.94, 7.3);
     } else if (valinta === 'efky2') {
@@ -175,7 +178,7 @@
 
   map.on('zoomend moveend', () => {
     const valinta = document.querySelector('input[name="layer"]:checked').value;
-    if (valinta.startsWith('efky') || valinta === 'tavastila' || valinta === 'peippola' || valinta === 'kirkkovuoret' || valinta === 'saarijarvi' || valinta === 'kooste' || valinta === '1975' || valinta === '1986') {
+    if (valinta.startsWith('efky') || valinta === 'tavastila' || valinta === 'peippola' || valinta === 'kirkkovuoret' || valinta === 'saarijarvi' || valinta === 'kooste' || valinta === '1975' || valinta === '1986'  || valinta === 'esijukola') {
       updateLayers();
     }
   });
