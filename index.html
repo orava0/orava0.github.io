@@ -76,7 +76,8 @@
   <label><input type="radio" name="layer" value="kooste"> Vanhojen kooste</label><br>
   <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi, 1986</label><br>  
   <label><input type="radio" name="layer" value="1986"> Fin 5, 1986</label><br>
-  <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label>
+  <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label><br>
+  <label><input type="radio" name="layer" value="rasteja"> Kuvitteellisia rasteja</label>
 </div>
 
 <div id="map"></div>
@@ -193,6 +194,8 @@
       addEfkyImage('EFKY_4.jpg', 60.59146, 26.90586, 5.24, 7.39, 5.4); 
     } else if (valinta === 'kooste') {
       addEfkyImage('Kooste.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
+    } else if (valinta === 'rasteja') {
+      addEfkyImage('Kooste_kuvitteellisilla_rasteilla.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
     }
   }
 
@@ -207,7 +210,7 @@
       const valinta = document.querySelector('input[name="layer"]:checked').value;
       if (
         valinta.startsWith('efky') ||
-        ['tavastila','peippola','kirkkovuoret','saarijarvi','kooste','1975','1986','esijukola'].includes(valinta)
+        ['tavastila','peippola','kirkkovuoret','saarijarvi','kooste','1975','1986','esijukola','rasteja'].includes(valinta)
       ) {
         updateLayers();
       }
