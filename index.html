@@ -41,7 +41,25 @@
       background: #eee;
       color: #666;
     }
-    
+
+    /* Linkki “Kuvitteellisia rasteja” -karttaan */
+    #rastejaLink {
+      display: inline-block;
+      margin-left: 4px;
+      margin-top: 4px;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #888;
+      background: #f7f7f7;
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #rastejaLink:hover {
+      background: #e6e6e6;
+    }
+
     #mouseCoords {
       position: absolute;
       bottom: 0;
@@ -77,7 +95,16 @@
   <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi, 1986</label><br>  
   <label><input type="radio" name="layer" value="1986"> Fin 5, 1986</label><br>
   <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label><br>
-  <label><input type="radio" name="layer" value="rasteja"> Kuvitteellisia rasteja</label>
+
+  <!-- Viimeinen rivi + linkki uuteen sivuun -->
+  <label>
+    <input type="radio" name="layer" value="rasteja">
+    Rasteja
+  </label>
+  <!-- VAIHDA href jos sivun nimi on eri -->
+  <a id="rastejaLink" href="rastit.html" target="_blank">
+    Uusi välilehti
+  </a>
 </div>
 
 <div id="map"></div>
@@ -158,20 +185,17 @@
   let layerVisible = true;
 
   function updateLayers() {
-    // Jos piilotus on päällä, varmistetaan ettei mikään valittu taso näy
     if (!layerVisible) {
       map.removeLayer(maastoLayer);
       removeEfkyOverlay();
       return;
     }
 
-    // Muuten näytetään valittu taso normaalisti
     map.removeLayer(maastoLayer);
     removeEfkyOverlay();
 
     const valinta = document.querySelector('input[name="layer"]:checked').value;
 
-    // HUOM: "satelliitti" ei tee mitään, koska Esri on aina taustalla
     if (valinta === 'maasto') {
       maastoLayer.addTo(map);
     } else if (valinta === 'esijukola') {
@@ -217,11 +241,10 @@
     }
   });
 
-  // On/Off-nappi: näyttää/piilottaa valitun tason
+  // On/Off-nappi
   const onOffBtn = document.getElementById('onOffBtn');
   onOffBtn.addEventListener('click', () => {
     layerVisible = !layerVisible;
-    // (valinnat säilyvät, vain näkyvyys muuttuu)
     if (layerVisible) {
       onOffBtn.classList.remove('off');
       updateLayers();
