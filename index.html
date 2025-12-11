@@ -85,6 +85,7 @@
   <br>
   <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
   <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
+  <label><input type="radio" name="layer" value="rinnevarjoste" checked> Rinnevarjoste</label><br>
   <label><input type="radio" name="layer" value="esijukola"> Esi-Jukola</label><br>
   <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
   <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>  
@@ -218,6 +219,8 @@
       addEfkyImage('EFKY_4.jpg', 60.59146, 26.90586, 5.24, 7.39, 5.4); 
     } else if (valinta === 'kooste') {
       addEfkyImage('Kooste.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
+    } else if (valinta === 'rinnevarjoste') {
+      addEfkyImage('rinnevarjoste.jpg', 60.59526, 26.89291, 8.815, 7.4, 0);
     } else if (valinta === 'rasteja') {
       addEfkyImage('Kooste_kuvitteellisilla_rasteilla.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
     }
@@ -234,7 +237,7 @@
       const valinta = document.querySelector('input[name="layer"]:checked').value;
       if (
         valinta.startsWith('efky') ||
-        ['tavastila','peippola','kirkkovuoret','saarijarvi','kooste','1975','1986','esijukola','rasteja'].includes(valinta)
+        ['tavastila','peippola','kirkkovuoret','saarijarvi','kooste','1975','1986','esijukola','rasteja','rinnevarjoste'].includes(valinta)
       ) {
         updateLayers();
       }
