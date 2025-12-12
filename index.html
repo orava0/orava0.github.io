@@ -24,6 +24,32 @@
       font-size: 16px;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
       line-height: 1.4;
+      box-sizing: border-box;
+      max-width: 220px;
+    }
+
+    /* Otsikkorivi + väkänen */
+    #layerHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    #collapseBtn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    /* Kun koko laatikko on ”collapsed”, piilotetaan sisältö */
+    #layerToggle.collapsed #layerContent {
+      display: none;
     }
 
     /* Pieni On/Off-nappi */
@@ -80,32 +106,40 @@
 <!-- <div id="mouseCoords">Koordinaatit: </div> -->
 
 <div id="layerToggle">
-  <!-- UUSI On/Off-nappi -->
-  <button id="onOffBtn" type="button" title="Näytä/piilota valittu taso">On/Off</button>
-  <br>
-  <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
-  <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
-  <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
-  <label><input type="radio" name="layer" value="esijukola"> Esi-Jukola</label><br>
-  <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
-  <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>  
-  <label><input type="radio" name="layer" value="tavastila"> Tavastila</label><br>
-  <label><input type="radio" name="layer" value="peippola"> Peippola</label><br>
-  <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label><br>
-  <label><input type="radio" name="layer" value="kooste"> Vanhojen kooste</label><br>
-  <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi, 1986</label><br>  
-  <label><input type="radio" name="layer" value="1986"> Fin 5, 1986</label><br>
-  <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label><br>
+  <!-- UUSI otsikkorivi väkäsellä -->
+  <div id="layerHeader">
+    <span>Karttatasot</span>
+    <button id="collapseBtn" type="button" title="Pienennä/laajenna valikko">▲</button>
+  </div>
 
-  <!-- Viimeinen rivi + linkki uuteen sivuun -->
-  <label>
-    <input type="radio" name="layer" value="rasteja">
-    Rasteja
-  </label>
-  <!-- VAIHDA href jos sivun nimi on eri -->
-  <a id="rastejaLink" href="rastit.html" target="_blank">
-    Uusi välilehti
-  </a>
+  <!-- Varsinainen sisältö, jonka näkyvyyttä väkänen ohjaa -->
+  <div id="layerContent">
+    <!-- On/Off-nappi -->
+    <button id="onOffBtn" type="button" title="Näytä/piilota valittu taso">On/Off</button>
+    <br>
+    <label><input type="radio" name="layer" value="satelliitti"> SATELLIITTIKUVA</label><br>
+    <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
+    <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
+    <label><input type="radio" name="layer" value="esijukola"> Esi-Jukola</label><br>
+    <label><input type="radio" name="layer" value="efky1"> Kymin lentokenttä</label><br>
+    <label><input type="radio" name="layer" value="efky2"> Kymin lentokenttä 2</label><br>  
+    <label><input type="radio" name="layer" value="tavastila"> Tavastila</label><br>
+    <label><input type="radio" name="layer" value="peippola"> Peippola</label><br>
+    <label><input type="radio" name="layer" value="kirkkovuoret"> Kirkkovuoret</label><br>
+    <label><input type="radio" name="layer" value="kooste"> Vanhojen kooste</label><br>
+    <label><input type="radio" name="layer" value="saarijarvi"> Saarijärvi, 1986</label><br>  
+    <label><input type="radio" name="layer" value="1986"> Fin 5, 1986</label><br>
+    <label><input type="radio" name="layer" value="1975"> SM-viesti, 1975</label><br>
+
+    <!-- Viimeinen rivi + linkki uuteen sivuun -->
+    <label>
+      <input type="radio" name="layer" value="rasteja">
+      Rasteja
+    </label>
+    <a id="rastejaLink" href="rastit.html" target="_blank">
+      Uusi välilehti
+    </a>
+  </div>
 </div>
 
 <div id="map"></div>
@@ -255,6 +289,22 @@
       onOffBtn.classList.add('off');
       map.removeLayer(maastoLayer);
       removeEfkyOverlay();
+    }
+  });
+
+  // Väkäsen logiikka
+  const layerToggle = document.getElementById('layerToggle');
+  const collapseBtn = document.getElementById('collapseBtn');
+  let collapsed = false;
+
+  collapseBtn.addEventListener('click', () => {
+    collapsed = !collapsed;
+    if (collapsed) {
+      layerToggle.classList.add('collapsed');
+      collapseBtn.textContent = '▼';  // nuoli alas = valikon saa auki
+    } else {
+      layerToggle.classList.remove('collapsed');
+      collapseBtn.textContent = '▲';  // nuoli ylös = valikon saa kiinni
     }
   });
 
