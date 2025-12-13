@@ -151,6 +151,15 @@
     minZoom: 13,
     maxZoom: 17
   });
+  
+  // Mittakaavajana (vasen alakulma)
+  L.control.scale({
+    position: 'bottomleft', // bottomleft | bottomright | topleft | topright
+    metric: true,           // metri / km
+    imperial: false,        // pois mailit
+    maxWidth: 140           // px
+  }).addTo(map);
+
 
   const mouseEl = document.getElementById('mouseCoords');
   map.on('mousemove', function(e) {
