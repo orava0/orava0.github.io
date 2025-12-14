@@ -12,7 +12,6 @@
     html, body { height: 100%; margin: 0; padding: 0; }
     #map { width: 100%; height: 100%; }
 
-    /* Kaksi laatikkoa vierekkäin aina (myös mobiilissa) */
     #uiContainer {
       position: absolute;
       top: 10px;
@@ -20,11 +19,10 @@
       z-index: 1000;
       display: flex;
       gap: 10px;
-      flex-wrap: nowrap; /* ei allekkain */
+      flex-wrap: nowrap;
       align-items: flex-start;
     }
 
-    /* Yhteinen tyyli valikkolaatikoille */
     .uiBox {
       background: white;
       padding: 6px 8px;
@@ -83,7 +81,7 @@
       color: #777;
     }
 
-    #rastejaLink {
+    .smallLink {
       display: inline-block;
       margin-left: 6px;
       margin-top: 6px;
@@ -96,44 +94,35 @@
       text-decoration: none;
       cursor: pointer;
     }
-    #rastejaLink:hover { background: #e6e6e6; }
+    .smallLink:hover { background: #e6e6e6; }
 
-  /* Mobiili: pidetään vierekkäin, mutta siirretään vähän oikealle ettei osu zoom-nappeihin */
-  @media (max-width: 520px) {
-    #uiContainer {
-      left: 55px;   /* <-- nosta tätä jos edelleen osuu */
-      right: 10px;
+    @media (max-width: 520px) {
+      #uiContainer { left: 55px; right: 10px; }
+      .uiBox {
+        font-size: 14px;
+        padding: 6px;
+        max-width: calc(50vw - 12px);
+      }
+      .uiHeader { font-size: 13px; }
     }
-
-    .uiBox {
-      font-size: 14px;
-      padding: 6px;
-      max-width: calc(50vw - 12px);
-    }
-
-    .uiHeader { font-size: 13px; }
-  }
   </style>
 </head>
 <body>
 
   <div id="uiContainer">
-    <!-- LAATIKKO 1: Pohjakartta -->
     <div id="layerToggle" class="uiBox">
       <div class="uiHeader">
         <span>Pohjakartta</span>
         <button id="collapseBtn1" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
       </div>
-
       <div class="uiContent">
         <label><input type="radio" name="layer" value="satelliitti"> Satelliittikuva</label><br>
-        <label><input type="radio" name="layer" value="orto"> Ilmakuva (vain lähi)</label><br>
+        <label><input type="radio" name="layer" value="orto"> Ilmakuva</label><br>
         <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
         <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
       </div>
     </div>
 
-    <!-- LAATIKKO 2: Overlay + On/Off -->
     <div id="overlayToggle" class="uiBox">
       <div class="uiHeader">
         <span>Kartta (overlay)</span>
@@ -158,8 +147,9 @@
           <option value="rasteja">Rasteja</option>
         </select>
 
-        <a id="rastejaLink" href="rastit.html" target="_blank">Rastit</a>
-        <a id="rastejaLink" href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank">Karttamerkit</a>
+        <a class="smallLink" href="rastit.html" target="_blank">Rastit</a>
+        <a class="smallLink" href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank">Karttamerkit</a>
+        <a class="smallLink" href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank">3dkartta</a>
       </div>
     </div>
   </div>
@@ -167,6 +157,15 @@
   <div id="map"></div>
 
 <script>
+  // =========================
+  // ASETUKSET
+  // =========================
+  const MML_API_KEY = '060d0c90-a4de-483c-8bb3-4d69bcf5b56f';
+
+  // *** LOGIIKKA: vain ORTO vaihtaa lähdettä zoomin perusteella:
+  // *** z <= 15 => ORTO haetaan MML WMTS:stä, z >= 16 => ORTO haetaan lokaalisti (GitHub).
+  const ORTO_SWITCH_ZOOM = 15; // raja, jonka alapuolella käytetään MML:ää
+
   const map = L.map('map', {
     center: [60.5750, 26.8939],
     zoom: 14,
@@ -174,108 +173,181 @@
     maxZoom: 17
   });
 
-  // Punainen viiva aina päällimmäiseksi
   map.createPane('topLinePane');
   map.getPane('topLinePane').style.zIndex = 9999;
 
-  // ESRI tausta aina näkyvissä
   const esriLayer = L.tileLayer(
     'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Karttakuva © Esri & contributors', maxZoom: 19 }
+    { attribution: 'Karttakuva © Esri & contributors', maxZoom: 19, updateWhenIdle: true, reuseTiles: true, keepBuffer: 2 }
   ).addTo(map);
 
-  // Omat tilet
-  const maastoLayer = L.tileLayer('taustakartta_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true
+  const smoothTileOpts = {
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    reuseTiles: true,
+    keepBuffer: 3
+  };
+
+  function isOrtoLowZoom() { return map.getZoom() <= ORTO_SWITCH_ZOOM; }
+
+  // =========================
+  // MML WMTS ORTO (vain z <= 15)
+  // =========================
+  const mmlOrtoLow = L.tileLayer(
+    `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
+    `&LAYER=ortokuva&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
+    `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg&api-key=${encodeURIComponent(MML_API_KEY)}`,
+    { minZoom: 0, maxZoom: ORTO_SWITCH_ZOOM, attribution: 'Ortokuva © Maanmittauslaitos', ...smoothTileOpts }
+  );
+
+  // =========================
+  // LOKAALIT TILET (aina maasto + rinnevarjoste, ja ORTO z>=16)
+  // =========================
+  const maastoLocal = L.tileLayer('taustakartta_tiles/{z}/{x}/{y}.png', {
+    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true, ...smoothTileOpts
   });
 
-  const rinnevarjosteLayer = L.tileLayer('rinnevarjoste_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true
+  const rinnevarjosteLocal = L.tileLayer('rinnevarjoste_tiles/{z}/{x}/{y}.png', {
+    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true, ...smoothTileOpts
   });
 
-  // Orto-alueen rajaus (vähentää turhia tile-pyyntöjä)
   const ORTO_BOUNDS = L.latLngBounds(
     [60.5553, 26.8336], // SW
     [60.6447, 26.9505]  // NE
   );
 
-  // *** LOGIIKKA: Orto näkyy vain kahdella lähimmällä zoomtasolla (16–17).
-  // *** Jos käyttäjä zoomaa ulos (zoom < 16) ja orto on valittuna, vaihdetaan automaattisesti Esrin satelliittikuvaan.
-  const ORTO_MIN_ZOOM = 16;
-  const ORTO_MAX_ZOOM = 17;
-  const ORTO_NATIVE_ZOOM = 17;
-
-  // Orto-tiilet ovat fyysisesti vain z=17 -> z=16 näytetään skaalattuna (mutta EI enää pienemmillä zoomeilla)
-  const ortoLayer = L.tileLayer('orto_tiles/{z}/{x}/{y}.jpg', {
+  const ortoLocal = L.tileLayer('orto_tiles/{z}/{x}/{y}.jpg', {
     tileSize: 256,
     tms: true,
     opacity: 1,
-
-    minNativeZoom: ORTO_NATIVE_ZOOM,
-    maxNativeZoom: ORTO_NATIVE_ZOOM,
-
-    minZoom: ORTO_MIN_ZOOM,
-    maxZoom: ORTO_MAX_ZOOM,
-
+    minNativeZoom: 17,
+    maxNativeZoom: 17,
+    minZoom: 13,
+    maxZoom: 17,
     bounds: ORTO_BOUNDS,
     noWrap: true,
-
-    // vähennetään aggressiivista latausta
-    updateWhenIdle: true,
-    updateWhenZooming: false,
-    keepBuffer: 1
+    ...smoothTileOpts
   });
 
-  function removeOwnLayers() {
-    map.removeLayer(maastoLayer);
-    map.removeLayer(rinnevarjosteLayer);
-    map.removeLayer(ortoLayer);
+  // =========================
+  // POHJAKERROKSEN HALLINTA
+  // =========================
+  let activeBaseLayer = null;
+
+  function desiredBaseLayer() {
+    const base = document.querySelector('input[name="layer"]:checked').value;
+
+    if (base === 'satelliitti') return null; // Esri näkyy taustalla
+    if (base === 'maasto') return maastoLocal; // AINA lokaalisti
+    if (base === 'rinnevarjoste') return rinnevarjosteLocal; // AINA lokaalisti
+
+    if (base === 'orto') {
+      return isOrtoLowZoom() ? mmlOrtoLow : ortoLocal; // VAIN orto vaihtaa zoomin mukaan
+    }
+
+    return null;
   }
 
-  // Image overlayt
-  let efkyOverlay = null;
+  function setActiveBaseLayer(next) {
+    if (activeBaseLayer === next) return;
+    if (activeBaseLayer) map.removeLayer(activeBaseLayer);
+    activeBaseLayer = next;
+    if (activeBaseLayer) map.addLayer(activeBaseLayer);
+  }
 
-  function addEfkyImage(src, lat, lon, widthKm, heightKm, angleDeg) {
-    removeEfkyOverlay();
+  function updateBaseLayers() {
+    setActiveBaseLayer(desiredBaseLayer());
+  }
 
+  // =========================
+  // OVERLAYT (ei välky)
+  // =========================
+  const overlaySelect = document.getElementById('overlaySelect');
+  const overlayOnOffBtn = document.getElementById('overlayOnOffBtn');
+  let overlayVisible = true;
+
+  let overlayImg = null;
+  let overlaySpec = null;
+
+  function positionOverlayImg() {
+    if (!overlayImg || !overlaySpec) return;
+
+    const { lat, lon, widthKm, heightKm, angleDeg } = overlaySpec;
     const latlng = L.latLng(lat, lon);
     const center = map.latLngToLayerPoint(latlng);
 
     const kmToPx = (km) => {
-      const p1 = map.latLngToLayerPoint(latlng);
       const p2 = map.latLngToLayerPoint(L.latLng(lat + (km / 111.32), lon));
+      const p1 = map.latLngToLayerPoint(latlng);
       return Math.abs(p2.y - p1.y);
     };
 
     const widthPx = kmToPx(widthKm);
     const heightPx = kmToPx(heightKm);
 
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.position = 'absolute';
-    img.style.width = `${widthPx}px`;
-    img.style.height = `${heightPx}px`;
-    img.style.left = `${center.x - widthPx / 2}px`;
-    img.style.top = `${center.y - heightPx / 2}px`;
-    img.style.transform = `rotate(${angleDeg}deg)`;
-    img.style.transformOrigin = 'center center';
-    img.style.opacity = '1.0';
-    img.style.pointerEvents = 'none';
-    img.style.zIndex = '999';
-    img.style.mixBlendMode = 'normal';
-
-    efkyOverlay = img;
-    map.getPanes().overlayPane.appendChild(img);
+    overlayImg.style.width = `${widthPx}px`;
+    overlayImg.style.height = `${heightPx}px`;
+    overlayImg.style.left = `${center.x - widthPx / 2}px`;
+    overlayImg.style.top = `${center.y - heightPx / 2}px`;
+    overlayImg.style.transform = `rotate(${angleDeg}deg)`;
   }
 
-  function removeEfkyOverlay() {
-    if (efkyOverlay && efkyOverlay.parentNode) {
-      efkyOverlay.parentNode.removeChild(efkyOverlay);
-      efkyOverlay = null;
+  function removeOverlayImg() {
+    if (overlayImg && overlayImg.parentNode) overlayImg.parentNode.removeChild(overlayImg);
+    overlayImg = null;
+    overlaySpec = null;
+  }
+
+  function showOverlay(spec) {
+    overlaySpec = spec;
+
+    if (!overlayVisible || !overlaySpec) {
+      removeOverlayImg();
+      return;
     }
+
+    if (!overlayImg) {
+      overlayImg = document.createElement('img');
+      overlayImg.style.position = 'absolute';
+      overlayImg.style.opacity = '1.0';
+      overlayImg.style.pointerEvents = 'none';
+      overlayImg.style.zIndex = '999';
+      overlayImg.style.transformOrigin = 'center center';
+      overlayImg.style.mixBlendMode = 'normal';
+      map.getPanes().overlayPane.appendChild(overlayImg);
+    }
+
+    if (overlayImg.src !== spec.src) overlayImg.src = spec.src;
+    positionOverlayImg();
   }
 
+  function applyOverlayFromSelect() {
+    const v = overlaySelect.value;
+    if (!overlayVisible || !v) {
+      removeOverlayImg();
+      return;
+    }
+
+    const specs = {
+      esijukola:   { src:'EsiJukola.jpg', lat:60.56836, lon:26.92413, widthKm:3.48,  heightKm:3.015, angleDeg:11.2 },
+      efky1:       { src:'EFKY_1.jpg',    lat:60.57796, lon:26.8853,  widthKm:2.12,  heightKm:2.94,  angleDeg:7.3 },
+      efky2:       { src:'EFKY_2.jpg',    lat:60.58616, lon:26.87696, widthKm:2.83,  heightKm:4.09,  angleDeg:7.3 },
+      tavastila:   { src:'Tavastila.jpg', lat:60.57469, lon:26.93866, widthKm:2.00,  heightKm:2.93,  angleDeg:7.5 },
+      peippola:    { src:'Peippola.jpg',  lat:60.56246, lon:26.91016, widthKm:2.10,  heightKm:3.00,  angleDeg:7.7 },
+      kirkkovuoret:{ src:'Kirkkovuoret.jpg', lat:60.60961, lon:26.90236, widthKm:2.96, heightKm:2.12, angleDeg:8.7 },
+      kooste:      { src:'Kooste.jpg',    lat:60.58716, lon:26.88561, widthKm:8.305, heightKm:11.97, angleDeg:8.4 },
+      saarijarvi:  { src:'Saarijarvi.jpg',lat:60.60056, lon:26.89086, widthKm:8.48,  heightKm:6.03,  angleDeg:5.1 },
+      1986:        { src:'EFKY_3.jpg',    lat:60.55766, lon:26.90186, widthKm:6.52,  heightKm:9.21,  angleDeg:5.2 },
+      1975:        { src:'EFKY_4.jpg',    lat:60.59146, lon:26.90586, widthKm:5.24,  heightKm:7.39,  angleDeg:5.4 },
+      rasteja:     { src:'Kooste_kuvitteellisilla_rasteilla.jpg', lat:60.58716, lon:26.88561, widthKm:8.305, heightKm:11.97, angleDeg:8.4 }
+    };
+
+    showOverlay(specs[v] || null);
+  }
+
+  // =========================
   // Punainen reitti
+  // =========================
   const punainenReitti = [
     [60.5578, 26.8920],
     [60.5698, 26.8712],
@@ -311,113 +383,39 @@
     pane: 'topLinePane'
   }).addTo(map);
 
-  const overlaySelect = document.getElementById('overlaySelect');
-  const overlayOnOffBtn = document.getElementById('overlayOnOffBtn');
-  let overlayVisible = true;
-
-  function applyOverlayFromSelect() {
-    removeEfkyOverlay();
-    if (!overlayVisible) return;
-
-    const v = overlaySelect.value;
-    if (!v) return;
-
-    if (v === 'esijukola') {
-      addEfkyImage('EsiJukola.jpg', 60.56836, 26.92413, 3.48, 3.015, 11.2);
-    } else if (v === 'efky1') {
-      addEfkyImage('EFKY_1.jpg', 60.57796, 26.8853, 2.12, 2.94, 7.3);
-    } else if (v === 'efky2') {
-      addEfkyImage('EFKY_2.jpg', 60.58616, 26.87696, 2.83, 4.09, 7.3);
-    } else if (v === 'tavastila') {
-      addEfkyImage('Tavastila.jpg', 60.57469, 26.93866, 2.00, 2.93, 7.5);
-    } else if (v === 'peippola') {
-      addEfkyImage('Peippola.jpg', 60.56246, 26.91016, 2.10, 3.00, 7.7);
-    } else if (v === 'kirkkovuoret') {
-      addEfkyImage('Kirkkovuoret.jpg', 60.60961, 26.90236, 2.96, 2.12, 8.7);
-    } else if (v === 'saarijarvi') {
-      addEfkyImage('Saarijarvi.jpg', 60.60056, 26.89086, 8.48, 6.03, 5.1);
-    } else if (v === '1986') {
-      addEfkyImage('EFKY_3.jpg', 60.55766, 26.90186, 6.52, 9.21, 5.2);
-    } else if (v === '1975') {
-      addEfkyImage('EFKY_4.jpg', 60.59146, 26.90586, 5.24, 7.39, 5.4);
-    } else if (v === 'kooste') {
-      addEfkyImage('Kooste.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
-    } else if (v === 'rasteja') {
-      addEfkyImage('Kooste_kuvitteellisilla_rasteilla.jpg', 60.58716, 26.88561, 8.305, 11.97, 8.4);
-    }
-  }
-
-  function setBaseRadio(value) {
-    const el = document.querySelector(`input[name="layer"][value="${value}"]`);
-    if (el) el.checked = true;
-  }
-
-  // Suojataan ettei tule "event-loop" (zoomend -> change -> update -> zoomend...)
-  let internalSwitch = false;
-
-  function updateLayers() {
-    removeOwnLayers();
-    const base = document.querySelector('input[name="layer"]:checked').value;
-
-    if (base === 'satelliitti') {
-      // Esri näkyy aina taustalla -> ei lisätä mitään
-    } else if (base === 'maasto') {
-      maastoLayer.addTo(map);
-    } else if (base === 'rinnevarjoste') {
-      rinnevarjosteLayer.addTo(map);
-    } else if (base === 'orto') {
-      // Jos ollaan liian ulkona, zoomataan vähintään 16:een (muuten orto ei edes yritä näkyä)
-      if (map.getZoom() < ORTO_MIN_ZOOM) {
-        internalSwitch = true;
-        map.setZoom(ORTO_MIN_ZOOM);
-        internalSwitch = false;
-      }
-      ortoLayer.addTo(map);
-    }
-
+  // =========================
+  // UI-eventit
+  // =========================
+  function updateAll() {
+    updateBaseLayers();
     applyOverlayFromSelect();
   }
 
-  // Pohjakartta-radiot
   document.querySelectorAll('input[name="layer"]').forEach(el => {
-    el.addEventListener('change', () => {
-      updateLayers();
-    });
+    el.addEventListener('change', updateAll);
   });
 
-  // Overlay dropdown
-  overlaySelect.addEventListener('change', updateLayers);
+  overlaySelect.addEventListener('change', applyOverlayFromSelect);
 
-  // Overlay pitää päivittää zoom/move
-  map.on('zoomend moveend', () => {
-    if (overlayVisible && overlaySelect.value) applyOverlayFromSelect();
-  });
-
-  // Overlay On/Off
   overlayOnOffBtn.addEventListener('click', () => {
     overlayVisible = !overlayVisible;
     overlayOnOffBtn.classList.toggle('off', !overlayVisible);
     overlaySelect.disabled = !overlayVisible;
 
-    if (!overlayVisible) removeEfkyOverlay();
+    if (!overlayVisible) removeOverlayImg();
     else applyOverlayFromSelect();
   });
 
-  // *** TÄRKEÄ: jos orto on valittuna ja käyttäjä zoomaa ulos (zoom < 16), vaihdetaan automaattisesti Esriin.
+  // Pohjakartta (orto) voi vaihtaa lähdettä vain zoomissa -> päivitä vain zoomendissä
   map.on('zoomend', () => {
-    if (internalSwitch) return;
-
-    const base = document.querySelector('input[name="layer"]:checked')?.value;
-    if (base === 'orto' && map.getZoom() < ORTO_MIN_ZOOM) {
-      internalSwitch = true;
-      removeOwnLayers();          // varmistus
-      setBaseRadio('satelliitti'); // vaihdetaan valinta UI:ssa
-      updateLayers();              // päivitetään layerit
-      internalSwitch = false;
-    }
+    updateBaseLayers();
+    positionOverlayImg();
   });
 
-  // Väkäset (kaksi laatikkoa)
+  map.on('move', () => {
+    positionOverlayImg();
+  });
+
   function setupCollapse(boxId, btnId) {
     const box = document.getElementById(boxId);
     const btn = document.getElementById(btnId);
@@ -432,7 +430,7 @@
   setupCollapse('overlayToggle', 'collapseBtn2');
 
   // Käynnistys
-  updateLayers();
+  updateAll();
 </script>
 
 </body>
