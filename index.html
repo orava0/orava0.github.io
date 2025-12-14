@@ -35,6 +35,12 @@
       max-width: 240px;
     }
 
+    /* Pohjakartta-laatikko leveämmäksi */
+    #layerToggle.uiBox {
+      max-width: 280px;   /* säädä: 280–360 */
+      min-width: 220px;   /* estää liian kapean */
+    }
+
     .uiHeader {
       display: flex;
       justify-content: space-between;
@@ -172,6 +178,13 @@
     minZoom: 13,
     maxZoom: 17
   });
+
+  L.control.scale({
+    position: 'bottomleft',
+    metric: true,
+    imperial: false,
+    maxWidth: 140
+  }).addTo(map);
 
   map.createPane('topLinePane');
   map.getPane('topLinePane').style.zIndex = 9999;
