@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
+      <Title>orto_3857_clipped.tif</Title>
+      <Abstract></Abstract>
+      <SRS>EPSG:3857</SRS>
+      <BoundingBox minx="26.78040771437069" miny="60.55530083319488" maxx="26.99999962793230" maxy="60.64470000008677"/>
+      <Origin x="26.78040771437069" y="60.55530083319488"/>
+      <TileFormat width="256" height="256" mime-type="image/png" extension="png"/>
+      <TileSets profile="mercator">
+        <TileSet href="16" units-per-pixel="2.38865713348389" order="16"/>
+        <TileSet href="17" units-per-pixel="1.19432856674194" order="17"/>
+      </TileSets>
+    </TileMap>
+    
