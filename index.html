@@ -98,22 +98,27 @@
     }
     #rastejaLink:hover { background: #e6e6e6; }
 
-    /* Mobiili: pidetään vierekkäin, mutta pienennetään */
-    @media (max-width: 520px) {
-      #uiContainer { left: 10px; right: 10px; }
-      .uiBox {
-        font-size: 14px;
-        padding: 6px;
-        max-width: calc(50vw - 12px);
-      }
-      .uiHeader { font-size: 13px; }
+  /* Mobiili: pidetään vierekkäin, mutta siirretään vähän oikealle ettei osu zoom-nappeihin */
+  @media (max-width: 520px) {
+    #uiContainer {
+      left: 55px;   /* <-- nosta tätä jos edelleen osuu */
+      right: 10px;
     }
+
+    .uiBox {
+      font-size: 14px;
+      padding: 6px;
+      max-width: calc(50vw - 12px);
+    }
+
+    .uiHeader { font-size: 13px; }
+  }
   </style>
 </head>
 <body>
 
   <div id="uiContainer">
-    <!-- LAATIKKO 1: Pohjakartta (EI On/Off-nappia enää) -->
+    <!-- LAATIKKO 1: Pohjakartta -->
     <div id="layerToggle" class="uiBox">
       <div class="uiHeader">
         <span>Pohjakartta</span>
@@ -122,7 +127,7 @@
 
       <div class="uiContent">
         <label><input type="radio" name="layer" value="satelliitti"> Satelliittikuva</label><br>
-        <label><input type="radio" name="layer" value="orto"> Ilmakuva (orto)</label><br>
+        <label><input type="radio" name="layer" value="orto"> Ilmakuva (vain lähi)</label><br>
         <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
         <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
       </div>
@@ -188,15 +193,37 @@
     tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true
   });
 
-  // Orto-tiilet tehty vain z=17, mutta näytetään myös muilla zoomeilla skaalattuna
+  // Orto-alueen rajaus (vähentää turhia tile-pyyntöjä)
+  const ORTO_BOUNDS = L.latLngBounds(
+    [60.5553, 26.8336], // SW
+    [60.6447, 26.9505]  // NE
+  );
+
+  // *** LOGIIKKA: Orto näkyy vain kahdella lähimmällä zoomtasolla (16–17).
+  // *** Jos käyttäjä zoomaa ulos (zoom < 16) ja orto on valittuna, vaihdetaan automaattisesti Esrin satelliittikuvaan.
+  const ORTO_MIN_ZOOM = 16;
+  const ORTO_MAX_ZOOM = 17;
+  const ORTO_NATIVE_ZOOM = 17;
+
+  // Orto-tiilet ovat fyysisesti vain z=17 -> z=16 näytetään skaalattuna (mutta EI enää pienemmillä zoomeilla)
   const ortoLayer = L.tileLayer('orto_tiles/{z}/{x}/{y}.jpg', {
     tileSize: 256,
     tms: true,
     opacity: 1,
-    minNativeZoom: 17,
-    maxNativeZoom: 17,
-    minZoom: 13,
-    maxZoom: 17
+
+    minNativeZoom: ORTO_NATIVE_ZOOM,
+    maxNativeZoom: ORTO_NATIVE_ZOOM,
+
+    minZoom: ORTO_MIN_ZOOM,
+    maxZoom: ORTO_MAX_ZOOM,
+
+    bounds: ORTO_BOUNDS,
+    noWrap: true,
+
+    // vähennetään aggressiivista latausta
+    updateWhenIdle: true,
+    updateWhenZooming: false,
+    keepBuffer: 1
   });
 
   function removeOwnLayers() {
@@ -286,7 +313,6 @@
 
   const overlaySelect = document.getElementById('overlaySelect');
   const overlayOnOffBtn = document.getElementById('overlayOnOffBtn');
-
   let overlayVisible = true;
 
   function applyOverlayFromSelect() {
@@ -321,8 +347,15 @@
     }
   }
 
+  function setBaseRadio(value) {
+    const el = document.querySelector(`input[name="layer"][value="${value}"]`);
+    if (el) el.checked = true;
+  }
+
+  // Suojataan ettei tule "event-loop" (zoomend -> change -> update -> zoomend...)
+  let internalSwitch = false;
+
   function updateLayers() {
-    // Pohjakartta aina radiosta
     removeOwnLayers();
     const base = document.querySelector('input[name="layer"]:checked').value;
 
@@ -333,16 +366,23 @@
     } else if (base === 'rinnevarjoste') {
       rinnevarjosteLayer.addTo(map);
     } else if (base === 'orto') {
+      // Jos ollaan liian ulkona, zoomataan vähintään 16:een (muuten orto ei edes yritä näkyä)
+      if (map.getZoom() < ORTO_MIN_ZOOM) {
+        internalSwitch = true;
+        map.setZoom(ORTO_MIN_ZOOM);
+        internalSwitch = false;
+      }
       ortoLayer.addTo(map);
     }
 
-    // Overlay dropdown + overlay On/Off
     applyOverlayFromSelect();
   }
 
   // Pohjakartta-radiot
   document.querySelectorAll('input[name="layer"]').forEach(el => {
-    el.addEventListener('change', updateLayers);
+    el.addEventListener('change', () => {
+      updateLayers();
+    });
   });
 
   // Overlay dropdown
@@ -361,6 +401,20 @@
 
     if (!overlayVisible) removeEfkyOverlay();
     else applyOverlayFromSelect();
+  });
+
+  // *** TÄRKEÄ: jos orto on valittuna ja käyttäjä zoomaa ulos (zoom < 16), vaihdetaan automaattisesti Esriin.
+  map.on('zoomend', () => {
+    if (internalSwitch) return;
+
+    const base = document.querySelector('input[name="layer"]:checked')?.value;
+    if (base === 'orto' && map.getZoom() < ORTO_MIN_ZOOM) {
+      internalSwitch = true;
+      removeOwnLayers();          // varmistus
+      setBaseRadio('satelliitti'); // vaihdetaan valinta UI:ssa
+      updateLayers();              // päivitetään layerit
+      internalSwitch = false;
+    }
   });
 
   // Väkäset (kaksi laatikkoa)
