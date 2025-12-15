@@ -12,6 +12,19 @@
     html, body { height: 100%; margin: 0; padding: 0; }
     #map { width: 100%; height: 100%; }
 
+    #moreModalBody a {
+      color: #1a73e8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    #moreModalBody a:hover {
+      text-decoration: underline;
+    }
+    #moreModalBody a:visited {
+      color: #1558b0;
+    }
+
+
     #uiContainer {
       position: absolute;
       top: 10px;
@@ -37,8 +50,8 @@
 
     /* Pohjakartta-laatikko leveämmäksi */
     #layerToggle.uiBox {
-      max-width: 160px;   /* säädä: 280–360 */
-      min-width: 160px;   /* estää liian kapean */
+      max-width: 160px;
+      min-width: 160px;
     }
 
     .uiHeader {
@@ -87,6 +100,7 @@
       color: #777;
     }
 
+    /* (voit jättää tämän, vaikka linkit siirtyy modaliin) */
     .smallLink {
       display: inline-block;
       margin-left: 6px;
@@ -102,6 +116,87 @@
     }
     .smallLink:hover { background: #e6e6e6; }
 
+    /* =========================
+       ☰ Lisää -valikko (modal)
+       ========================= */
+    #moreBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1200;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid #888;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #moreModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 3000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+    #moreModal.open { display: flex; }
+
+    #moreModalCard {
+      background: #fff;
+      width: min(92vw, 420px);
+      max-height: 80vh;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    #moreModalHeader {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      font-weight: bold;
+      border-bottom: 1px solid #ddd;
+    }
+
+    #moreCloseBtn {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 6px;
+      border-radius: 8px;
+    }
+    #moreCloseBtn:hover { background: #f1f1f1; }
+
+    #moreModalBody {
+      padding: 12px;
+      overflow: auto;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    #moreModalBody a {
+      color: #0b57d0;
+      text-decoration: underline;
+    }
+
     @media (max-width: 520px) {
       #uiContainer { left: 55px; right: 10px; }
       .uiBox {
@@ -110,6 +205,9 @@
         max-width: calc(50vw - 12px);
       }
       .uiHeader { font-size: 13px; }
+
+      #moreBtn { width: 38px; height: 38px; font-size: 21px; }
+      #moreModalCard { width: min(94vw, 520px); max-height: 85vh; }
     }
   </style>
 </head>
@@ -146,20 +244,51 @@
           <option value="tavastila">Tavastila</option>
           <option value="peippola">Peippola</option>
           <option value="kirkkovuoret">Kirkkovuoret</option>
-          <option value="kooste">Vanhojen kooste</option>
+          <option value="kooste">Kooste vanhoista</option>
           <option value="saarijarvi">Saarijärvi, 1986</option>
           <option value="1986">Fin 5, 1986</option>
           <option value="1975">SM-viesti, 1975</option>
-          <option value="rasteja">Rasteja</option>
+          <option value="rasteja">Kuvitteellisia rasteja</option>
         </select>
 
-        <a class="smallLink" href="rastit.html" target="_blank">Rastit</a>
-        <a class="smallLink" href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank">Karttamerkit</a>
-        <a class="smallLink" href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank">3dkartta</a>
       </div>
     </div>
   </div>
 
+  <!-- ☰ Lisää-nappi -->
+  <button id="moreBtn" type="button" title="Lisää">☰</button>
+
+  <!-- Modal / teksti-ikkuna -->
+  <div id="moreModal" aria-hidden="true">
+    <div id="moreModalCard" role="dialog" aria-modal="true" aria-labelledby="moreTitle">
+      <div id="moreModalHeader">
+        <span id="moreTitle">Lisää</span>
+        <button id="moreCloseBtn" type="button" title="Sulje">✕</button>
+      </div>
+      <div id="moreModalBody">
+        Tällä sivulla voi tutustua Kotka Jukolan 2026 kilpailumaastoon.
+        Harjoituskieltoalue on merkitty punaisella. 
+        Valitse pohjakartta ja sen päälle erilaisia vanhoja karttoja. 
+        Valitsemalla vanhan kartan on/off voit vertailla miten esim. avokalliot
+        näkyvät vanhalla kartalla verrattuna ilmakuvaan.
+        <br><br>
+
+        <p style="margin:0 0 8px 0;"><b>Muut linkit</b></p>
+        <p style="margin:0;">
+          <a href="rastit.html" target="_blank" rel="noopener">Kuvitteelliset rastit uuteen välilehteen</a>
+          <br><br>
+          <a href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank" rel="noopener">Maastokartan karttamerkit</a>
+          <br><br>
+          <a href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>
+          <br><br>
+          <a href="https://jukola.com/2026/harjoituskieltoalue-map/" target="_blank" rel="noopener">jukola.com</a>
+          
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
   <div id="map"></div>
 
 <script>
@@ -349,11 +478,11 @@
       tavastila:   { src:'Tavastila.jpg', lat:60.57469, lon:26.93866, widthKm:2.00,  heightKm:2.93,  angleDeg:7.5 },
       peippola:    { src:'Peippola.jpg',  lat:60.56246, lon:26.91016, widthKm:2.10,  heightKm:3.00,  angleDeg:7.7 },
       kirkkovuoret:{ src:'Kirkkovuoret.jpg', lat:60.60961, lon:26.90236, widthKm:2.96, heightKm:2.12, angleDeg:8.7 },
-      kooste:      { src:'Kooste.jpg',    lat:60.58716, lon:26.88561, widthKm:8.305, heightKm:11.97, angleDeg:8.4 },
+      kooste:      { src:'Kooste.jpg',    lat:60.58716, lon:26.88541, widthKm:8.305, heightKm:11.845, angleDeg:8.8 },
       saarijarvi:  { src:'Saarijarvi.jpg',lat:60.60056, lon:26.89086, widthKm:8.48,  heightKm:6.03,  angleDeg:5.1 },
       1986:        { src:'EFKY_3.jpg',    lat:60.55766, lon:26.90186, widthKm:6.52,  heightKm:9.21,  angleDeg:5.2 },
       1975:        { src:'EFKY_4.jpg',    lat:60.59146, lon:26.90586, widthKm:5.24,  heightKm:7.39,  angleDeg:5.4 },
-      rasteja:     { src:'Kooste_kuvitteellisilla_rasteilla.jpg', lat:60.58716, lon:26.88561, widthKm:8.305, heightKm:11.97, angleDeg:8.4 }
+      rasteja:     { src:'Kooste_kuvitteellisilla_rasteilla.jpg', lat:60.58716, lon:26.88541, widthKm:8.305, heightKm:11.84, angleDeg:8.8 }
     };
 
     showOverlay(specs[v] || null);
@@ -420,7 +549,6 @@
     else applyOverlayFromSelect();
   });
 
-  // Pohjakartta (orto) voi vaihtaa lähdettä vain zoomissa -> päivitä vain zoomendissä
   map.on('zoomend', () => {
     updateBaseLayers();
     positionOverlayImg();
@@ -442,6 +570,38 @@
   }
   setupCollapse('layerToggle', 'collapseBtn1');
   setupCollapse('overlayToggle', 'collapseBtn2');
+
+  // =========================
+  // ☰ Lisää-modal (avaa/sulje)
+  // =========================
+  const moreBtn = document.getElementById('moreBtn');
+  const moreModal = document.getElementById('moreModal');
+  const moreCloseBtn = document.getElementById('moreCloseBtn');
+
+  function openMore() {
+    moreModal.classList.add('open');
+    moreModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMore() {
+    moreModal.classList.remove('open');
+    moreModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  moreBtn.addEventListener('click', openMore);
+  moreCloseBtn.addEventListener('click', closeMore);
+
+  // Klikkaus taustaan sulkee (mutta ei kortin sisään)
+  moreModal.addEventListener('click', (e) => {
+    if (e.target === moreModal) closeMore();
+  });
+
+  // ESC sulkee
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && moreModal.classList.contains('open')) closeMore();
+  });
 
   // Käynnistys
   updateAll();
