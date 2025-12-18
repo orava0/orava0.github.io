@@ -24,6 +24,11 @@
       color: #1558b0;
     }
 
+    /* Nosta mittakaavajanaa ylemmäs ettei se jää copyright-tekstien alle */
+    .leaflet-bottom.leaflet-left .leaflet-control-scale {
+      margin-bottom: 35px !important;
+    }
+
 
     #uiContainer {
       position: absolute;
@@ -234,6 +239,7 @@
         <label><input type="radio" name="layer" value="satelliitti"> Satelliittikuva</label><br>
         <label><input type="radio" name="layer" value="orto"> Ilmakuva</label><br>
         <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
+        <label><input type="radio" name="layer" value="mapant"> MapAnt</label><br>        
         <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
       </div>
     </div>
@@ -289,11 +295,12 @@
           <br><br>
           <a href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank" rel="noopener">Maastokartan karttamerkit</a>
           <br><br>
-          <a href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>
-          <br><br>
-          <a href="https://www.mapant.fi/?lat=60.5778450&lng=26.8937997&zoom=11" target="_blank" rel="noopener">mapant.fi</a>          
+          <a href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>                    
           <br><br>
           <a href="https://jukola.com/2026/harjoituskieltoalue-map/" target="_blank" rel="noopener">jukola.com</a>
+          <br><br>
+          <a href="https://www.google.com/maps/@60.5773589,26.897016,2980m/data=!3m1!1e3?entry=ttu" target="_blank" rel="noopener">maps.google.com</a>
+          <br>Google Maps esittää tuoreet satelliittikuvat vuodelta 2025. Niistä näkyy missä on tehty uusimmat hakkuut.
           
         </p>
       </div>
@@ -301,7 +308,8 @@
   </div>
 
   <div id="map"></div>
-  <div id="map"></div>
+  <div id="nlsAttribution"></div>
+  
 
 <script>
   // =========================
@@ -317,7 +325,7 @@
     center: [60.5750, 26.8939],
     zoom: 14,
     minZoom: 13,
-    maxZoom: 17,
+    maxZoom: 18,
     fadeAnimation: false   // <- estää “pehmeän” ilmestymisin
   });
 
@@ -363,6 +371,19 @@
     reuseTiles: true,
     keepBuffer: 3
   };
+  
+  const mapantLayer = L.tileLayer(
+    'https://wmts.mapant.fi/wmts_EPSG3857.php?z={z}&x={x}&y={y}',
+    {
+      maxZoom: 19,
+      opacity: 1.0,
+      ...smoothTileOpts,
+      attribution: '© MapAnt + © National Land Survey of Finland (NLS/MML) — https://www.mapant.fi/'
+    }
+  );
+  
+
+
 
   function isOrtoLowZoom() { return map.getZoom() <= ORTO_SWITCH_ZOOM; }
 
@@ -380,11 +401,11 @@
   // LOKAALIT TILET (aina maasto + rinnevarjoste, ja ORTO z>=16)
   // =========================
   const maastoLocal = L.tileLayer('taustakartta_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true, ...smoothTileOpts
+    tileSize: 256, minZoom: 13, maxZoom: 18, maxNativeZoom: 17,opacity: 1, tms: true, attribution: 'Maastokartta © Maanmittauslaitos', ...smoothTileOpts
   });
 
   const rinnevarjosteLocal = L.tileLayer('rinnevarjoste_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 17, opacity: 1, tms: true, ...smoothTileOpts
+    tileSize: 256, minZoom: 13, maxZoom: 18, maxNativeZoom: 17, opacity: 1, tms: true,  attribution: 'Rinnevarjoste © Maanmittauslaitos', ...smoothTileOpts
   });
 
   const ORTO_BOUNDS = L.latLngBounds(
@@ -399,9 +420,10 @@
     minNativeZoom: 17,
     maxNativeZoom: 17,
     minZoom: 13,
-    maxZoom: 17,
+    maxZoom: 18,
     bounds: ORTO_BOUNDS,
     noWrap: true,
+    attribution: 'Ortokuva © Maanmittauslaitos',
     ...smoothTileOpts
   });
 
@@ -416,7 +438,8 @@
     if (base === 'satelliitti') return null; // Esri näkyy taustalla
     if (base === 'maasto') return maastoLocal; // AINA lokaalisti
     if (base === 'rinnevarjoste') return rinnevarjosteLocal; // AINA lokaalisti
-
+    if (base === 'mapant') return mapantLayer;
+    
     if (base === 'orto') {
       return isOrtoLowZoom() ? mmlOrtoLow : ortoLocal; // VAIN orto vaihtaa zoomin mukaan
     }
@@ -434,6 +457,8 @@
   function updateBaseLayers() {
     setActiveBaseLayer(desiredBaseLayer());
   }
+  
+
 
   // =========================
   // OVERLAYT (ei välky)
@@ -583,7 +608,7 @@
   });
 
   map.on('zoomend', () => {
-    updateBaseLayers();
+    updateBaseLayers();    
     positionOverlayImg();
   });
 
