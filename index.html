@@ -59,6 +59,12 @@
       min-width: 160px;
     }
 
+    /* Rastiväli-laatikko kapeaksi (mahtuu pienelle näytölle) */
+    #legToggle.uiBox {
+      max-width: 100px;
+      min-width: 90px;
+    }
+
     .uiHeader {
       display: flex;
       justify-content: space-between;
@@ -257,17 +263,6 @@
       </div>
     </div>
 
-    <div id="legToggle" class="uiBox">
-      <div class="uiHeader">
-        <span>Rastiväli</span>
-        <button id="collapseBtn3" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
-      </div>
-      <div class="uiContent">
-        <button id="randomLegBtn" type="button" class="legActionBtn">🎲 Uusi rastiväli</button>
-        <button id="clearLegBtn" type="button" class="legActionBtn" style="margin-top:6px;">✕ Poista</button>
-      </div>
-    </div>
-
     <div id="overlayToggle" class="uiBox">
       <div class="uiHeader">
         <span>Kartta (overlay)</span>
@@ -283,6 +278,17 @@
           <option value="rinnevarjoste">Rinnevarjoste</option>          
         </select>
 
+      </div>
+    </div>
+
+    <div id="legToggle" class="uiBox">
+      <div class="uiHeader">
+        <span>Rastiväli</span>
+        <button id="collapseBtn3" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
+      </div>
+      <div class="uiContent">
+        <button id="randomLegBtn" type="button" class="legActionBtn" title="Uusi rastiväli">🎲 Uusi</button>
+        <button id="clearLegBtn" type="button" class="legActionBtn" style="margin-top:6px;" title="Poista rastiväli">✕ Pois</button>
       </div>
     </div>
   </div>
@@ -730,7 +736,7 @@
 
     L.polyline([p1, p2], {
       color: legColor,
-      weight: 8,
+      weight: 6,
       opacity: 0.75,
       pane: 'topLinePane'
     }).addTo(legLayerGroup);
@@ -742,7 +748,7 @@
       L.circleMarker(pt, {
         radius: 25,
         color: legColor,
-        weight: 8,
+        weight: 6,
         opacity: 0.75,
         fill: false,
         pane: 'topLinePane'
