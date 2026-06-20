@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Jukola 2026 – valitse karttataso</title>
+  <title>Jukola 2027 – valitse karttataso</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -91,6 +91,20 @@
       cursor: pointer;
     }
     #overlayOnOffBtn.off { background: #eee; color: #666; }
+
+    .legActionBtn {
+      display: block;
+      width: 100%;
+      padding: 5px 8px;
+      font-size: 14px;
+      border: 1px solid #888;
+      border-radius: 6px;
+      background: #f7f7f7;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    .legActionBtn:hover { background: #e6e6e6; }
+    .legActionBtn:active { background: #ddd; }
 
     #overlaySelect {
       width: 100%;
@@ -239,8 +253,18 @@
         <label><input type="radio" name="layer" value="satelliitti"> Satelliittikuva</label><br>
         <label><input type="radio" name="layer" value="orto"> Ilmakuva</label><br>
         <label><input type="radio" name="layer" value="maasto" checked> Maastokartta</label><br>
-        <label><input type="radio" name="layer" value="mapant"> MapAnt</label><br>        
-        <label><input type="radio" name="layer" value="rinnevarjoste"> Rinnevarjoste</label><br>
+        <label><input type="radio" name="layer" value="mapant"> MapAnt</label><br>                
+      </div>
+    </div>
+
+    <div id="legToggle" class="uiBox">
+      <div class="uiHeader">
+        <span>Rastiväli</span>
+        <button id="collapseBtn3" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
+      </div>
+      <div class="uiContent">
+        <button id="randomLegBtn" type="button" class="legActionBtn">🎲 Uusi rastiväli</button>
+        <button id="clearLegBtn" type="button" class="legActionBtn" style="margin-top:6px;">✕ Poista</button>
       </div>
     </div>
 
@@ -255,20 +279,8 @@
 
         <select id="overlaySelect" title="Valitse overlay-kartta">
           <option value="">(Ei overlayta)</option>
-          <option value="esijukola">Esi-Jukola</option>
-          <option value="efky1">Kymin lentokenttä</option>
-          <option value="efky2">Kymin lentokenttä 2</option>
-          <option value="pahavuori">Pahavuori</option>
-          <option value="laukkakallio">Laukkakallio</option>
-          <option value="tavastila">Tavastila</option>
-          <option value="peippola">Peippola</option>
-          <option value="kirkkovuoret">Kirkkovuoret</option>
-          <option value="rapukallio">Rapukallio</option>
-          <option value="kooste">Kooste vanhoista</option>
-          <option value="saarijarvi">Saarijärvi, 1986</option>
-          <option value="1986">Fin 5, 1986</option>
-          <option value="1975">SM-viesti, 1975</option>
-          <option value="rasteja">Kuvitteellisia rasteja</option>
+          <option value="vanha">Vanha kartta</option>          
+          <option value="rinnevarjoste">Rinnevarjoste</option>          
         </select>
 
       </div>
@@ -285,25 +297,23 @@
         <button id="moreCloseBtn" type="button" title="Sulje">✕</button>
       </div>
       <div id="moreModalBody">
-        Tällä sivulla voi tutustua Kotka Jukolan 2026 kilpailumaastoon.
+        Tällä sivulla voi tutustua Vuokatti-Jukolan 2027 kilpailumaastoon.
         Harjoituskieltoalue on merkitty punaisella. 
-        Valitse pohjakartta ja sen päälle erilaisia vanhoja karttoja. 
+        Valitse pohjakartta ja sen päälle vanhoja karttoja. 
         Valitsemalla vanhan kartan on/off voit vertailla miten esim. avokalliot
         näkyvät vanhalla kartalla verrattuna ilmakuvaan.
         <br><br>
 
         <p style="margin:0 0 8px 0;"><b>Linkkejä</b></p>
-        <p style="margin:0;">
-          <a href="rastit.html" target="_blank" rel="noopener">Kuvitteelliset rastit uuteen välilehteen</a>
-          <br><br>
+        <p style="margin:0;">          
           <a href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank" rel="noopener">Maastokartan karttamerkit</a>
           <br><br>
-          <a href="https://3dkartta.fi/#60.57563,26.89900,3484m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>                    
+          <a href="https://3dkartta.fi/#64.10344,28.26180,8743m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>                    
           <br><br>
-          <a href="https://jukola.com/2026/harjoituskieltoalue-map/" target="_blank" rel="noopener">jukola.com</a>
+          <a href="https://vuokattisport.fi/wp-content/uploads/2025/05/Harjoituskieltoalue-myos-KRV.pdf" target="_blank" rel="noopener">harjoituskieltoalue</a>
           <br><br>
-          <a href="https://www.google.com/maps/@60.5773589,26.897016,2980m/data=!3m1!1e3?entry=ttu" target="_blank" rel="noopener">maps.google.com</a>
-          <br>Google Maps esittää tuoreet satelliittikuvat vuodelta 2025. Niistä näkyy missä on tehty uusimmat hakkuut.
+          <a href="https://www.google.com/maps/@64.1255851,28.2642254,5165m/data=!3m1!1e3?entry=ttu" target="_blank" rel="noopener">maps.google.com</a>
+          <br>Google Maps esittää tuoreet satelliittikuvat vuodelta 2026. Niistä näkyy missä on tehty uusimmat hakkuut.
           
         </p>
       </div>
@@ -320,16 +330,13 @@
   // =========================
   const MML_API_KEY = '060d0c90-a4de-483c-8bb3-4d69bcf5b56f';
 
-  // *** LOGIIKKA: vain ORTO vaihtaa lähdettä zoomin perusteella:
-  // *** z <= 15 => ORTO haetaan MML WMTS:stä, z >= 16 => ORTO haetaan lokaalisti (GitHub).
-  const ORTO_SWITCH_ZOOM = 15; // raja, jonka alapuolella käytetään MML:ää
 
   const map = L.map('map', {
-    center: [60.5750, 26.8939],
+    center: [64.1200, 28.2620],
     zoom: 14,
     minZoom: 13,
     maxZoom: 18,
-    fadeAnimation: false   // <- estää “pehmeän” ilmestymisin
+    fadeAnimation: false   // <- estää “pehmeän” ilmestymisen
   });
 
   // ☰ nappi Leaflet-controlina zoom-nappien alle (topleft)
@@ -387,48 +394,39 @@
   
 
 
-
-  function isOrtoLowZoom() { return map.getZoom() <= ORTO_SWITCH_ZOOM; }
+  
 
   // =========================
   // MML WMTS ORTO (vain z <= 15)
   // =========================
-  const mmlOrtoLow = L.tileLayer(
+  const ortoWMTS = L.tileLayer(
     `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
     `&LAYER=ortokuva&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
     `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg&api-key=${encodeURIComponent(MML_API_KEY)}`,
-    { minZoom: 0, maxZoom: ORTO_SWITCH_ZOOM, attribution: 'Ortokuva © Maanmittauslaitos', ...smoothTileOpts }
+    {
+      minZoom: 0,
+      maxZoom: 19,
+      attribution: 'Ortokuva © Maanmittauslaitos',
+      ...smoothTileOpts
+    }
   );
 
   // =========================
-  // LOKAALIT TILET (aina maasto + rinnevarjoste, ja ORTO z>=16)
+  // MML:n maastokartta
   // =========================
-  const maastoLocal = L.tileLayer('taustakartta_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 18, maxNativeZoom: 17,opacity: 1, tms: true, attribution: 'Maastokartta © Maanmittauslaitos', ...smoothTileOpts
-  });
-
-  const rinnevarjosteLocal = L.tileLayer('rinnevarjoste_tiles/{z}/{x}/{y}.png', {
-    tileSize: 256, minZoom: 13, maxZoom: 18, maxNativeZoom: 17, opacity: 1, tms: true,  attribution: 'Rinnevarjoste © Maanmittauslaitos', ...smoothTileOpts
-  });
-
-  const ORTO_BOUNDS = L.latLngBounds(
-    [60.5553, 26.8336], // SW
-    [60.6447, 26.9505]  // NE
-  );
-
-  const ortoLocal = L.tileLayer('orto_tiles/{z}/{x}/{y}.jpg', {
-    tileSize: 256,
-    tms: true,
-    opacity: 1,
-    minNativeZoom: 17,
-    maxNativeZoom: 17,
-    minZoom: 13,
-    maxZoom: 18,
-    bounds: ORTO_BOUNDS,
-    noWrap: true,
-    attribution: 'Ortokuva © Maanmittauslaitos',
+  const maastoWMTS = L.tileLayer(
+  `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
+  `&LAYER=maastokartta&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
+  `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}` +
+  `&FORMAT=image/png&api-key=${encodeURIComponent(MML_API_KEY)}`,
+  {
+    attribution: 'Maastokartta © Maanmittauslaitos',
+    maxZoom: 19,
     ...smoothTileOpts
-  });
+  }
+  );
+
+
 
   // =========================
   // POHJAKERROKSEN HALLINTA
@@ -439,12 +437,12 @@
     const base = document.querySelector('input[name="layer"]:checked').value;
 
     if (base === 'satelliitti') return null; // Esri näkyy taustalla
-    if (base === 'maasto') return maastoLocal; // AINA lokaalisti
-    if (base === 'rinnevarjoste') return rinnevarjosteLocal; // AINA lokaalisti
+    if (base === 'maasto') return maastoWMTS;
+    if (base === 'rinnevarjoste') return rinnevarjosteLocal; // lokaalisti
     if (base === 'mapant') return mapantLayer;
     
     if (base === 'orto') {
-      return isOrtoLowZoom() ? mmlOrtoLow : ortoLocal; // VAIN orto vaihtaa zoomin mukaan
+      return ortoWMTS;
     }
 
     return null;
@@ -533,20 +531,9 @@
     }
 
     const specs = {
-      esijukola:   { src:'EsiJukola.jpg', lat:60.56836, lon:26.92413, widthKm:3.48,  heightKm:3.015, angleDeg:11.2 },
-      efky1:       { src:'EFKY_1.jpg',    lat:60.57791, lon:26.8854,  widthKm:2.1,  heightKm:2.92,  angleDeg:7.7 },
-      efky2:       { src:'EFKY_2.jpg',    lat:60.58621, lon:26.87701, widthKm:2.83,  heightKm:4.04,  angleDeg:7.5 },
-      pahavuori:   { src:'Pahavuori.jpg', lat:60.59109, lon:26.87734, widthKm:2.075,  heightKm:2.91,  angleDeg:7.9 },
-      laukkakallio:   { src:'Laukkakallio.jpg', lat:60.60651, lon:26.83344, widthKm:2.08,  heightKm:2.905,  angleDeg:10.8 },
-      tavastila:   { src:'Tavastila.jpg', lat:60.57469, lon:26.93866, widthKm:2.00,  heightKm:2.93,  angleDeg:7.5 },
-      peippola:    { src:'Peippola.jpg',  lat:60.56241, lon:26.91001, widthKm:2.07,  heightKm:2.97,  angleDeg:7.6 },
-      kirkkovuoret:{ src:'Kirkkovuoret.jpg', lat:60.60961, lon:26.90241, widthKm:2.955, heightKm:2.09, angleDeg:9.0 },
-      rapukallio:{ src:'Rapukallio.jpg', lat:60.59749, lon:26.93026, widthKm:2.26, heightKm:2.305, angleDeg:11.2 },
-      kooste:      { src:'Kooste.jpg',    lat:60.58716, lon:26.88541, widthKm:8.305, heightKm:11.845, angleDeg:8.8 },
-      saarijarvi:  { src:'Saarijarvi.jpg',lat:60.60056, lon:26.89086, widthKm:8.48,  heightKm:6.03,  angleDeg:5.1 },
-      1986:        { src:'EFKY_3.jpg',    lat:60.55766, lon:26.90186, widthKm:6.49,  heightKm:9.18,  angleDeg:5.1 },
-      1975:        { src:'EFKY_4.jpg',    lat:60.59136, lon:26.90596, widthKm:5.215,  heightKm:7.39,  angleDeg:5.4 },
-      rasteja:     { src:'Kooste_kuvitteellisilla_rasteilla.jpg', lat:60.58716, lon:26.88541, widthKm:8.305, heightKm:11.84, angleDeg:8.8 }
+      //esijukola:   { src:'EsiJukola.jpg', lat:60.56836, lon:26.92413, widthKm:3.48,  heightKm:3.015, angleDeg:11.2 },
+      vanha:       { src:'vanha.png',    lat:64.122, lon:28.2594,  widthKm:4.18,  heightKm:6.015,  angleDeg:11.2 },
+      rinnevarjoste:     { src:'rinnevarjoste.jpg', lat:64.10505, lon:28.24945, widthKm:6.63, heightKm:9.415, angleDeg:1.2 },            
     };
 
     showOverlay(specs[v] || null);
@@ -554,31 +541,85 @@
 
   // =========================
   // Punainen reitti
+  // Alla olevat koordinaatit saa suunnistusliiton karttarekisteri.fi kun liikuttaa kartan päällä hiirtä 
+  // ja katsoo WGS84-koordinaatteja alakulmassa.
   // =========================
   const punainenReitti = [
-    [60.5578, 26.8920],
-    [60.5698, 26.8712],
-    [60.5949, 26.8520],
-    [60.5984, 26.8421],
-    [60.6013, 26.8500],
-    [60.6286, 26.8584],
-    [60.6296, 26.8938],
-    [60.6205, 26.8990],
-    [60.6124, 26.9216],
-    [60.6095, 26.9273],
-    [60.6053, 26.9261],
-    [60.6006, 26.9293],
-    [60.5992, 26.9120],
-    [60.5951, 26.9102],
-    [60.5910, 26.9229],
-    [60.5867, 26.9227],
-    [60.5811, 26.9297],
-    [60.5771, 26.9297],
-    [60.5692, 26.8994],
-    [60.5670, 26.8987],
-    [60.5629, 26.9017],
-    [60.5603, 26.9003],
-    [60.5578, 26.8920]
+    [64.1327, 28.2895],
+    [64.1300, 28.2951],
+    [64.1256, 28.3010],
+    [64.1232, 28.2981],
+    [64.1197, 28.2959],
+    [64.1184, 28.2916],
+    [64.1174, 28.2867],
+    [64.1143, 28.2846],
+    [64.1079, 28.2751],
+    [64.1064, 28.2754],
+    [64.1051, 28.2740],
+    [64.1050, 28.2622],
+    [64.1031, 28.2596],
+    [64.1017, 28.2557],
+    [64.1010, 28.2557],
+    [64.1015, 28.2527],
+    [64.1025, 28.2505],
+    [64.1035, 28.2497],
+    [64.1036, 28.2493],
+    [64.1027, 28.2482],
+    [64.1024, 28.2463],
+    [64.1020, 28.2448],
+    [64.1016, 28.2420],
+    [64.0999, 28.2421],
+    [64.0992, 28.2391],
+    [64.0992, 28.2360],
+    [64.1015, 28.2302],
+    [64.1026, 28.2257],
+    [64.1033, 28.2252],
+    [64.1036, 28.2231],
+    [64.1072, 28.2241],
+    [64.1155, 28.2258],
+    [64.1161, 28.2262],
+    [64.1165, 28.2277],
+    [64.1172, 28.2283],
+    [64.1194, 28.2322],
+    [64.1205, 28.2325],
+    [64.1209, 28.2343],
+    [64.1223, 28.2372],
+    [64.1226, 28.2362],
+    [64.1233, 28.2365],
+    [64.1250, 28.2345],
+    [64.1254, 28.2352],
+    [64.1257, 28.2350],
+    [64.1259, 28.2358],
+    [64.1256, 28.2376],
+    [64.1259, 28.2385],
+    [64.1266, 28.2394],
+    [64.1265, 28.2403],
+    [64.1275, 28.2434],
+    [64.1291, 28.2402],
+    [64.1297, 28.2403],
+    [64.1309, 28.2440],
+    [64.1320, 28.2436],
+    [64.1335, 28.2467],
+    [64.1363, 28.2574],
+    [64.1357, 28.2614],
+    [64.1360, 28.2660],
+    [64.1351, 28.2659],
+    [64.1347, 28.2692],
+    [64.1352, 28.2698],
+    [64.1350, 28.2704],
+    [64.1345, 28.2704],
+    [64.1343, 28.2699],
+    [64.1334, 28.2713],
+    [64.1347, 28.2740],
+    [64.1345, 28.2768],
+    [64.1340, 28.2768],
+    [64.1338, 28.2781],
+    [64.1329, 28.2779],
+    [64.1322, 28.2813],
+    [64.1326, 28.2843],
+    [64.1319, 28.2850],
+    [64.1323, 28.2887],
+    [64.1327, 28.2895]
   ];
 
   L.polyline(punainenReitti, {
@@ -589,6 +630,161 @@
     lineJoin: 'round',
     pane: 'topLinePane'
   }).addTo(map);
+
+  // =========================
+  // SATUNNAINEN RASTIVÄLI
+  // =========================
+
+  // Piste polygonin sisällä (ray casting -algoritmi).
+  // polygon: array of [lat, lon]; point: [lat, lon]
+  function pointInPolygon(point, polygon) {
+    const [y, x] = point; // y = lat, x = lon
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const yi = polygon[i][0], xi = polygon[i][1];
+      const yj = polygon[j][0], xj = polygon[j][1];
+      const intersect = ((yi > y) !== (yj > y)) &&
+        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  }
+
+  // Polygonin bounding box, käytetään rejection samplingiin
+  function polygonBounds(polygon) {
+    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
+    polygon.forEach(([lat, lon]) => {
+      if (lat < minLat) minLat = lat;
+      if (lat > maxLat) maxLat = lat;
+      if (lon < minLon) minLon = lon;
+      if (lon > maxLon) maxLon = lon;
+    });
+    return { minLat, maxLat, minLon, maxLon };
+  }
+
+  const reittiBounds = polygonBounds(punainenReitti);
+
+  // Satunnainen piste rajaavan polygonin sisällä (rejection sampling)
+  function randomPointInPolygon(polygon, bounds, maxTries = 2000) {
+    for (let i = 0; i < maxTries; i++) {
+      const lat = bounds.minLat + Math.random() * (bounds.maxLat - bounds.minLat);
+      const lon = bounds.minLon + Math.random() * (bounds.maxLon - bounds.minLon);
+      if (pointInPolygon([lat, lon], polygon)) {
+        return [lat, lon];
+      }
+    }
+    return null; // ei löytynyt (ei pitäisi tapahtua järkevällä polygonilla)
+  }
+
+  // Box-Muller-muunnos: palauttaa normaalijakautuneen satunnaisluvun (mean, stdDev)
+  function gaussianRandom(mean, stdDev) {
+    let u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    const standardNormal = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    return mean + standardNormal * stdDev;
+  }
+
+  // Karkea muunnos metreistä asteiksi annetulla leveysasteella
+  function metersToLatDeg(m) { return m / 111320; }
+  function metersToLonDeg(m, atLat) { return m / (111320 * Math.cos(atLat * Math.PI / 180)); }
+
+  // Etsii toisen pisteen ensimmäisen läheltä niin, että:
+  // - etäisyys noudattaa Gaussin jakaumaa (mean, stdDev metreinä)
+  // - piste on polygonin sisällä
+  function randomSecondPoint(firstPoint, polygon, bounds, meanDist, stdDev, maxTries = 4000) {
+    const [lat0, lon0] = firstPoint;
+    for (let i = 0; i < maxTries; i++) {
+      // Gaussin jakaumasta etäisyys (negatiiviset/liian pienet hylätään ja arvotaan uudelleen)
+      let dist = gaussianRandom(meanDist, stdDev);
+      if (dist < 20) continue; // ei käytännössä päällekkäisiä pisteitä
+
+      const angle = Math.random() * 2 * Math.PI;
+      const dLat = metersToLatDeg(dist * Math.cos(angle));
+      const dLon = metersToLonDeg(dist * Math.sin(angle), lat0);
+
+      const candidate = [lat0 + dLat, lon0 + dLon];
+      if (pointInPolygon(candidate, polygon)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  // Rastivälin piirtokerros (viiva + 2 ympyrää), pidetään viite että voi poistaa
+  let legLayerGroup = null;
+
+  function clearLeg() {
+    if (legLayerGroup) {
+      map.removeLayer(legLayerGroup);
+      legLayerGroup = null;
+    }
+  }
+
+  function drawLeg(p1, p2) {
+    clearLeg();
+
+    legLayerGroup = L.layerGroup().addTo(map);
+
+    const legColor = '#d50071';
+
+    L.polyline([p1, p2], {
+      color: legColor,
+      weight: 8,
+      opacity: 0.75,
+      pane: 'topLinePane'
+    }).addTo(legLayerGroup);
+
+    // 50 px halkaisija -> radius 25 px. circleMarker:n radius on pikseleinä (ei metreinä),
+    // joten ympyrän koko pysyy samana kaikilla zoom-tasoilla.
+    // fillOpacity: 0 -> piirretään vain ympyrän reuna, ei täytettä.
+    [p1, p2].forEach(pt => {
+      L.circleMarker(pt, {
+        radius: 25,
+        color: legColor,
+        weight: 8,
+        opacity: 0.75,
+        fill: false,
+        pane: 'topLinePane'
+      }).addTo(legLayerGroup);
+    });
+  }
+
+  function createRandomLeg() {
+    // Tavoiteetäisyyksien parametrit (metreinä).
+    // Mean ja stdDev valittu niin että ne sopivat tämän kilpailualueen mittakaavaan
+    // (alue on n. 4-5 km leveä / korkea). Säädä tarvittaessa.
+    const meanDist = 600;   // keskietäisyys, m
+    const stdDev = 350;     // hajonta, m
+
+    const p1 = randomPointInPolygon(punainenReitti, reittiBounds);
+    if (!p1) {
+      alert('Ensimmäisen pisteen arpominen epäonnistui. Yritä uudelleen.');
+      return;
+    }
+
+    const p2 = randomSecondPoint(p1, punainenReitti, reittiBounds, meanDist, stdDev);
+    if (!p2) {
+      // Harvinainen tapaus: ei löytynyt sopivaa toista pistettä, yritetään koko funktiota uudelleen
+      createRandomLeg();
+      return;
+    }
+
+    drawLeg(p1, p2);
+
+    // Zoomaa/keskitä niin että koko rastiväli (molemmat pisteet + 50px ympyrät) näkyy.
+    // padding antaa marginaalia reunoille niin ympyrät eivät jää kartan reunan ulkopuolelle.
+    const legBounds = L.latLngBounds([p1, p2]);
+    map.flyToBounds(legBounds, {
+      paddingTopLeft: [70, 70],
+      paddingBottomRight: [70, 70],
+      maxZoom: 18,
+      duration: 0.75
+    });
+  }
+
+  document.getElementById('randomLegBtn').addEventListener('click', createRandomLeg);
+  document.getElementById('clearLegBtn').addEventListener('click', clearLeg);
 
   // =========================
   // UI-eventit
@@ -634,6 +830,7 @@
   }
   setupCollapse('layerToggle', 'collapseBtn1');
   setupCollapse('overlayToggle', 'collapseBtn2');
+  setupCollapse('legToggle', 'collapseBtn3');
 
   // =========================
   // ☰ Lisää-modal (avaa/sulje)
