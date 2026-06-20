@@ -56,10 +56,10 @@
     /* Pohjakartta-laatikko leveämmäksi */
     #layerToggle.uiBox {
       max-width: 115px;
-      min-width: 115px;
+      min-width: 90px;
     }
 
-    /* Kartta (overlay) -laatikolle oma leveysraja */
+    /* Kartta overlay -laatikolle oma leveysraja */
     #overlayToggle.uiBox {
       max-width: 100px;
       min-width: 100px;
@@ -68,7 +68,7 @@
     /* Rastiväli-laatikko kapeaksi (mahtuu pienelle näytölle) */
     #legToggle.uiBox {
       max-width: 100px;
-      min-width: 90px;
+      min-width: 70px;
     }
 
     .uiHeader {
@@ -271,7 +271,7 @@
 
     <div id="overlayToggle" class="uiBox">
       <div class="uiHeader">
-        <span>Kartta (overlay)</span>
+        <span>Kartta overlay</span>
         <button id="collapseBtn2" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
       </div>
 
@@ -279,7 +279,7 @@
         <button id="overlayOnOffBtn" type="button" title="Näytä/piilota overlay">On/Off</button>
 
         <select id="overlaySelect" title="Valitse overlay-kartta">
-          <option value="">(Ei overlayta)</option>
+          <option value="">Ei karttaa</option>
           <option value="vanha">Vanha kartta</option>          
           <option value="rinnevarjoste">Rinnevarjoste</option>          
         </select>
