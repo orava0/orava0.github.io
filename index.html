@@ -281,7 +281,13 @@
         <select id="overlaySelect" title="Valitse overlay-kartta">
           <option value="">Ei karttaa</option>
           <option value="vanha" selected>Vanha kartta</option>   <!-- Sana "selected" saa oletuksena tämän olemaan valittuna, eli vanha kartta aukeaa oletuksena kun sivu avataan. -->       
-          <option value="rinnevarjoste">Rinnevarjoste</option>          
+          <option value="rinnevarjoste">Rinnevarjoste</option>
+          <option value="esijukola_D1">Esi-Jukola D, 1</option>
+          <option value="esijukola_D2">Esi-Jukola D, 2</option>
+          <option value="esijukola_D3">Esi-Jukola D, 3</option>
+          <option value="esijukola_H1">Esi-Jukola H, 1</option>
+          <option value="esijukola_H2">Esi-Jukola H, 2</option>
+          <option value="esijukola_H3">Esi-Jukola H, 3</option>
         </select>
 
       </div>
@@ -543,7 +549,12 @@
     }
 
     const specs = {
-      //esijukola:   { src:'EsiJukola.jpg', lat:60.56836, lon:26.92413, widthKm:3.48,  heightKm:3.015, angleDeg:11.2 },
+      esijukola_D1:   { src:'esijukola_D1.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
+      esijukola_D2:   { src:'esijukola_D2.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
+      esijukola_D3:   { src:'esijukola_D3.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
+      esijukola_H1:   { src:'esijukola_H1.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
+      esijukola_H2:   { src:'esijukola_H2.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
+      esijukola_H3:   { src:'esijukola_H3.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
       vanha:       { src:'vanha.png',    lat:64.121974, lon:28.259331,  widthKm:4.181,  heightKm:6.015,  angleDeg:11.2 },
       rinnevarjoste:     { src:'rinnevarjoste.jpg', lat:64.10505, lon:28.24945, widthKm:6.63, heightKm:9.415, angleDeg:1.2 },            
     };
