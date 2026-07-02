@@ -1,0 +1,14 @@
+
+1) Luo harjoituskieltoalueen rajat, eli tiedosto "harjoituskieltoalue.js" käyttämällä sivua harjoituskieltoalueen_rajat.html
+   Tällä sivulla voit myös muokata aluetta myöhemmin ja tallentaa sen uudestaan.
+
+2) Georeferoi kartat käyttämällä sivua georeferointi.html
+   --> Se tallentaa kartat antamallesi nimelle ja lisää loppuun georeferoinnin tiedot,
+       esimerkiksi: Rinnevarjoste_6.63_9.415_1.2_64.10505_28.24945.jpg
+
+3) Lisää tiedoston index.html koodiin georeferoimasi tiedostot. 
+   Sieltä löytyy osio "MUOKKAA TÄTÄ LISTAA" johon tiedostojen nimet pitää lisätä.
+   Tällöin ne ilmestyy automaattisesti valittaviksi tasoiksi.
+
+   Huomaa, että index.html näyttää oletuksena päällimmäisen kartan, jonka nimen annat ensimmäisenä.
+   Kannattaa siis antaa ensimmäisenä alueen vanhan kartan nimi, koska se on kiinnostavin taso.

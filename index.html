@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Jukola 2027 – valitse karttataso</title>
+  <title>Jukola – valitse karttataso</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -12,23 +12,9 @@
     html, body { height: 100%; margin: 0; padding: 0; }
     #map { width: 100%; height: 100%; }
 
-    #moreModalBody a {
-      color: #1a73e8;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    #moreModalBody a:hover {
-      text-decoration: underline;
-    }
-    #moreModalBody a:visited {
-      color: #1558b0;
-    }
-
-    /* Nosta mittakaavajanaa ylemmäs ettei se jää copyright-tekstien alle */
     .leaflet-bottom.leaflet-left .leaflet-control-scale {
       margin-bottom: 35px !important;
     }
-
 
     #uiContainer {
       position: absolute;
@@ -53,23 +39,9 @@
       max-width: 240px;
     }
 
-    /* Pohjakartta-laatikko leveämmäksi */
-    #layerToggle.uiBox {
-      max-width: 115px;
-      min-width: 90px;
-    }
-
-    /* Kartta overlay -laatikolle oma leveysraja */
-    #overlayToggle.uiBox {
-      max-width: 100px;
-      min-width: 100px;
-    }
-
-    /* Rastiväli-laatikko kapeaksi (mahtuu pienelle näytölle) */
-    #legToggle.uiBox {
-      max-width: 100px;
-      min-width: 70px;
-    }
+    #layerToggle.uiBox  { max-width: 115px; min-width: 90px; }
+    #overlayToggle.uiBox { max-width: 160px; min-width: 140px; }
+    #legToggle.uiBox    { max-width: 100px; min-width: 70px; }
 
     .uiHeader {
       display: flex;
@@ -126,770 +98,478 @@
       border: 1px solid #888;
       background: #fff;
     }
-    #overlaySelect:disabled {
-      background: #f1f1f1;
-      color: #777;
-    }
+    #overlaySelect:disabled { background: #f1f1f1; color: #777; }
 
-    /* (voit jättää tämän, vaikka linkit siirtyy modaliin) */
-    .smallLink {
-      display: inline-block;
-      margin-left: 6px;
-      margin-top: 6px;
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      border: 1px solid #888;
-      background: #f7f7f7;
-      color: #000;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .smallLink:hover { background: #e6e6e6; }
-
-    /* =========================
-       ☰ Lisää -valikko (modal)
-       ========================= */
-    /* Leaflet-controlina näkyvä ☰-nappi */
     .leaflet-control-more.leaflet-bar {
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
-
     .leaflet-control-more button {
-      width: 33px;
-      height: 33px;
-      border: none;
-      background: #fff;
-      cursor: pointer;
-      font-size: 22px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-tap-highlight-color: transparent;
+      width: 33px; height: 33px;
+      border: none; background: #fff; cursor: pointer;
+      font-size: 22px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
     }
-
-    /* pieni väli zoom-nappien ja ☰-napin väliin */
-    .leaflet-top.leaflet-left .leaflet-control-more {
-      margin-top: 6px;
-    }
-
-    @media (max-width: 520px) {
-      .leaflet-control-more button { width: 38px; height: 38px; font-size: 21px; }
-    }
-
+    .leaflet-top.leaflet-left .leaflet-control-more { margin-top: 6px; }
 
     #moreModal {
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background: rgba(0,0,0,0.35);
-      z-index: 3000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      box-sizing: border-box;
+      z-index: 3000; display: none;
+      align-items: center; justify-content: center;
+      padding: 12px; box-sizing: border-box;
     }
     #moreModal.open { display: flex; }
 
     #moreModalCard {
       background: #fff;
-      width: min(92vw, 420px);
-      max-height: 80vh;
+      width: min(92vw, 420px); max-height: 80vh;
       border-radius: 12px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+      display: flex; flex-direction: column; overflow: hidden;
       font-family: sans-serif;
     }
-
     #moreModalHeader {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 12px;
-      font-weight: bold;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+      padding: 10px 12px; font-weight: bold;
       border-bottom: 1px solid #ddd;
     }
-
     #moreCloseBtn {
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      padding: 4px 6px;
-      border-radius: 8px;
+      border: none; background: none; cursor: pointer;
+      font-size: 18px; line-height: 1;
+      padding: 4px 6px; border-radius: 8px;
     }
     #moreCloseBtn:hover { background: #f1f1f1; }
-
     #moreModalBody {
-      padding: 12px;
-      overflow: auto;
-      font-size: 14px;
-      line-height: 1.45;
+      padding: 12px; overflow: auto;
+      font-size: 14px; line-height: 1.45;
     }
-
-    #moreModalBody a {
-      color: #0b57d0;
-      text-decoration: underline;
-    }
+    #moreModalBody a { color: #0b57d0; text-decoration: underline; }
 
     @media (max-width: 520px) {
       #uiContainer { left: 55px; right: 10px; }
-      .uiBox {
-        font-size: 14px;
-        padding: 6px;
-        max-width: calc(50vw - 12px);
-      }
+      .uiBox { font-size: 14px; padding: 6px; max-width: calc(50vw - 12px); }
       .uiHeader { font-size: 13px; }
-
-      #moreBtn { width: 38px; height: 38px; font-size: 21px; }
       #moreModalCard { width: min(94vw, 520px); max-height: 85vh; }
     }
   </style>
 </head>
 <body>
 
-  <div id="uiContainer">
-    <div id="layerToggle" class="uiBox">
-      <div class="uiHeader">
-        <span>Pohjakartta</span>
-        <button id="collapseBtn1" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
-      </div>
-      <div class="uiContent">
-        <label><input type="radio" name="layer" value="satelliitti"> Satel.</label><br>
-        <label><input type="radio" name="layer" value="orto"> Ilmak.</label><br>
-        <label><input type="radio" name="layer" value="maasto" checked> Maasto</label><br>
-        <label><input type="radio" name="layer" value="mapant"> MapAnt</label><br>                
-      </div>
+<div id="uiContainer">
+  <div id="layerToggle" class="uiBox">
+    <div class="uiHeader">
+      <span>Pohjakartta</span>
+      <button id="collapseBtn1" class="collapseBtn" type="button">▲</button>
     </div>
-
-    <div id="overlayToggle" class="uiBox">
-      <div class="uiHeader">
-        <span>Kartta overlay</span>
-        <button id="collapseBtn2" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
-      </div>
-
-      <div class="uiContent">
-        <button id="overlayOnOffBtn" type="button" title="Näytä/piilota overlay">On/Off</button>
-
-        <select id="overlaySelect" title="Valitse overlay-kartta">
-          <option value="">Ei karttaa</option>
-          <option value="vanha" selected>Vanha kartta</option>   <!-- Sana "selected" saa oletuksena tämän olemaan valittuna, eli vanha kartta aukeaa oletuksena kun sivu avataan. -->       
-          <option value="rinnevarjoste">Rinnevarjoste</option>
-          <option value="esijukola_D1">Esi-Jukola D, 1</option>
-          <option value="esijukola_D2">Esi-Jukola D, 2</option>
-          <option value="esijukola_D3">Esi-Jukola D, 3</option>
-          <option value="esijukola_H1">Esi-Jukola H, 1</option>
-          <option value="esijukola_H2">Esi-Jukola H, 2</option>
-          <option value="esijukola_H3">Esi-Jukola H, 3</option>
-        </select>
-
-      </div>
-    </div>
-
-    <div id="legToggle" class="uiBox">
-      <div class="uiHeader">
-        <span>Rastiväli</span>
-        <button id="collapseBtn3" class="collapseBtn" type="button" title="Pienennä/laajenna">▲</button>
-      </div>
-      <div class="uiContent">
-        <button id="randomLegBtn" type="button" class="legActionBtn" title="Uusi rastiväli">🎲 Uusi</button>
-        <button id="clearLegBtn" type="button" class="legActionBtn" style="margin-top:6px;" title="Poista rastiväli">✕ Pois</button>
-      </div>
+    <div class="uiContent">
+      <label><input type="radio" name="layer" value="satelliitti"> Satel.</label><br>
+      <label><input type="radio" name="layer" value="orto"> Ilmak.</label><br>
+      <label><input type="radio" name="layer" value="maasto" checked> Maasto</label><br>
+      <label><input type="radio" name="layer" value="mapant"> MapAnt</label>
     </div>
   </div>
 
-
-
-  <!-- Modal / teksti-ikkuna -->
-  <div id="moreModal" aria-hidden="true">
-    <div id="moreModalCard" role="dialog" aria-modal="true" aria-labelledby="moreTitle">
-      <div id="moreModalHeader">
-        <span id="moreTitle">Lisätietoja</span>
-        <button id="moreCloseBtn" type="button" title="Sulje">✕</button>
-      </div>
-      <div id="moreModalBody">
-        Tällä sivulla voi tutustua Vuokatti-Jukolan 2027 kilpailumaastoon.
-        Harjoituskieltoalue on merkitty punaisella. 
-        Valitse pohjakartta ja sen päälle vanhoja karttoja. 
-        Valitsemalla vanhan kartan on/off voit vertailla miten esim. avokalliot
-        näkyvät vanhalla kartalla verrattuna ilmakuvaan.
-        <br><br>
-
-        <p style="margin:0 0 8px 0;"><b>Linkkejä</b></p>
-        <p style="margin:0;">          
-          <a href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank" rel="noopener">Maastokartan karttamerkit</a>
-          <br><br>
-          <a href="https://3dkartta.fi/#64.10344,28.26180,8743m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a>                    
-          <br><br>
-          <a href="https://vuokattisport.fi/wp-content/uploads/2025/05/Harjoituskieltoalue-myos-KRV.pdf" target="_blank" rel="noopener">harjoituskieltoalue</a>
-          <br><br>
-          <a href="https://www.google.com/maps/@64.1255851,28.2642254,5165m/data=!3m1!1e3?entry=ttu" target="_blank" rel="noopener">maps.google.com</a>
-          <br>Google Maps esittää tuoreet satelliittikuvat vuodelta 2026. Niistä näkyy missä on tehty uusimmat hakkuut.
-          
-        </p>
-      </div>
+  <div id="overlayToggle" class="uiBox">
+    <div class="uiHeader">
+      <span>Kartta overlay</span>
+      <button id="collapseBtn2" class="collapseBtn" type="button">▲</button>
+    </div>
+    <div class="uiContent">
+      <button id="overlayOnOffBtn" type="button">On/Off</button>
+      <select id="overlaySelect">
+        <!-- Täytetään JS:ssä GEOREF_FILES-listan perusteella -->
+      </select>
     </div>
   </div>
 
-  <div id="map"></div>
-  <div id="nlsAttribution"></div>
-  
+  <div id="legToggle" class="uiBox">
+    <div class="uiHeader">
+      <span>Rastiväli</span>
+      <button id="collapseBtn3" class="collapseBtn" type="button">▲</button>
+    </div>
+    <div class="uiContent">
+      <button id="randomLegBtn" type="button" class="legActionBtn">🎲 Uusi</button>
+      <button id="clearLegBtn"  type="button" class="legActionBtn" style="margin-top:6px;">✕ Pois</button>
+    </div>
+  </div>
+</div>
 
+<div id="moreModal" aria-hidden="true">
+  <div id="moreModalCard" role="dialog" aria-modal="true" aria-labelledby="moreTitle">
+    <div id="moreModalHeader">
+      <span id="moreTitle">Lisätietoja</span>
+      <button id="moreCloseBtn" type="button">✕</button>
+    </div>
+    <div id="moreModalBody">
+      Tällä sivulla voi tutustua Jukolan kilpailumaastoon.
+      Harjoituskieltoalue on merkitty punaisella.
+      Valitse pohjakartta ja sen päälle vanhoja karttoja.
+      <br><br>
+      <p style="margin:0 0 8px 0;"><b>Linkkejä</b></p>
+      <p style="margin:0;">
+        <a href="https://www.maanmittauslaitos.fi/sites/maanmittauslaitos.fi/files/attachments/2025/05/karttamerkkien_selite_2025_0.pdf" target="_blank" rel="noopener">Maastokartan karttamerkit</a><br><br>
+        <a href="https://3dkartta.fi/#64.10344,28.26180,8743m/topo-fi" target="_blank" rel="noopener">3dkartta.fi</a><br><br>
+        <a href="https://vuokattisport.fi/wp-content/uploads/2025/05/Harjoituskieltoalue-myos-KRV.pdf" target="_blank" rel="noopener">Harjoituskieltoalue</a><br><br>
+        <a href="https://www.google.com/maps/@64.1255851,28.2642254,5165m/data=!3m1!1e3?entry=ttu" target="_blank" rel="noopener">maps.google.com</a><br>
+        Google Maps esittää tuoreet satelliittikuvat vuodelta 2026.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script src="harjoituskieltoalue.js"></script>
 <script>
-  // =========================
-  // ASETUKSET
-  // =========================
-  const MML_API_KEY = '060d0c90-a4de-483c-8bb3-4d69bcf5b56f';
+
+// =============================================================
+//  ▼▼▼  MUOKKAA TÄTÄ LISTAA  ▼▼▼
+//
+//  Lisää tähän taulukkoon georeferoitujen kuvatiedostojen nimet.
+//  Nimen rakenne (georeferointi-sivun tallentama muoto):
+//    <nimi>_<leveys>_<korkeus>_<kierto>_<lat>_<lon>.<pääte>
+//  Esimerkki:
+//    "Järvikylä_1.789_1.142_11.4_60.58976_26.87066.jpg"
+//
+//  Valintalistan näyttönimi luetaan automaattisesti tiedostonimen
+//  ensimmäisestä osasta (ennen ensimmäistä alaviivaa + numeroa).
+//  Voit myös antaa oman näyttönimen lisäämällä sen toiseksi
+//  alkioksi, esim: ["Järvikylä_1.789_....jpg", "Järvikylän kartta 2024"]
+//
+//  HUOMAA: ENSIMMÄISENÄ LISTALLA OLEVA TASO NÄKYY OLETUKSENA AINA KUN SIVU AVATAAN.
+//          TÄHÄN SIIS KANNATTAA VALITA ALUEEN VANHA KARTTA.
+//          Tämän näkyvyyden saa aikaan koodissa oleva rivi: if (i === 0) opt.selected = true;
+//
+// =============================================================
+const GEOREF_FILES = [
+  "Vanha_4.181_6.015_11.2_64.121974_28.259331.png",
+  "Rinnevarjoste_6.63_9.415_1.2_64.10505_28.24945.jpg",
+  "Esi-Jukola_D1_1.98_2.834_13.3_64.071931_28.236007.jpg",
+  "Esi-Jukola_D2_1.98_2.834_13.3_64.071931_28.236007.jpg",
+  "Esi-Jukola_D3_1.98_2.834_13.3_64.071931_28.236007.jpg",
+  "Esi-Jukola_H1_1.98_2.834_13.3_64.071931_28.236007.jpg",
+  "Esi-Jukola_H2_1.98_2.834_13.3_64.071931_28.236007.jpg",
+  "Esi-Jukola_H3_1.98_2.834_13.3_64.071931_28.236007.jpg",
+];
+// =============================================================
+//  ▲▲▲  MUOKKAA VAIN TÄTÄ LISTAA  ▲▲▲
+// =============================================================
 
 
-  const map = L.map('map', {
-    center: [64.1200, 28.2620],
-    zoom: 14,
-    minZoom: 13,
-    maxZoom: 18,
-    fadeAnimation: false   // <- estää “pehmeän” ilmestymisen
-  });
-
-  // ☰ nappi Leaflet-controlina zoom-nappien alle (topleft)
-  const MoreControl = L.Control.extend({
-    options: { position: 'topleft' },
-    onAdd: function() {
-      const wrapper = L.DomUtil.create('div', 'leaflet-control-more leaflet-bar');
-      const btn = L.DomUtil.create('button', '', wrapper);
-      btn.id = 'moreBtn';
-      btn.type = 'button';
-      btn.title = 'Lisää';
-      btn.textContent = '☰';
-
-      // ettei kartta zoomaa/draggaa napin käytöstä
-      L.DomEvent.disableClickPropagation(wrapper);
-      L.DomEvent.disableScrollPropagation(wrapper);
-
-      return wrapper;
-    }
-  });
-  map.addControl(new MoreControl());
 
 
-  L.control.scale({
-    position: 'bottomleft',
-    metric: true,
-    imperial: false,
-    maxWidth: 140
-  }).addTo(map);
+// Parsii tiedostonimen georeferointitiedoiksi.
+// Tukee muotoa: <nimi>_<lev>_<kor>_<kier>_<lat>_<lon>.<ext>
+// <nimi>-osassa voi olla alaviivia ja kirjaimia, mutta numeroalkuinen
+// osa aloittaa georeferoinnin (ensimmäinen "_<luku>" -kohta).
+function parseGeorefFilename(filename) {
+  // Erotetaan tiedostopääte
+  const dotIdx = filename.lastIndexOf('.');
+  const ext  = dotIdx >= 0 ? filename.slice(dotIdx) : '';
+  const base = dotIdx >= 0 ? filename.slice(0, dotIdx) : filename;
 
-  map.createPane('topLinePane');
-  map.getPane('topLinePane').style.zIndex = 9999;
+  // Pilkotaan alaviivalla ja etsitään kohta, josta alkaa 5 numerokenttää peräkkäin
+  const parts = base.split('_');
+  // Etsitään takaapäin: viimeiset 5 osaa ovat lon, lat, kierto, korkeus, leveys
+  // (jos osia on vähemmän kuin 6, tiedosto ei ole georef-muodossa)
+  if (parts.length < 6) return null;
 
-  const esriLayer = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    { attribution: 'Karttakuva © Esri & contributors', maxZoom: 19, updateWhenIdle: true, reuseTiles: true, keepBuffer: 2 }
-  ).addTo(map);
+  const [lonStr, latStr, angleStr, heightStr, widthStr] = parts.slice(-5).reverse();
+  // Tarkistetaan että nämä ovat kaikki lukuja
+  const nums = [widthStr, heightStr, angleStr, latStr, lonStr].map(Number);
+  if (nums.some(isNaN)) return null;
 
-  const smoothTileOpts = {
-    updateWhenIdle: true,
-    updateWhenZooming: false,
-    reuseTiles: true,
-    keepBuffer: 3
-  };
-  
-  const mapantLayer = L.tileLayer(
-    'https://wmts.mapant.fi/wmts_EPSG3857.php?z={z}&x={x}&y={y}',
-    {
-      maxZoom: 19,
-      opacity: 1.0,
-      ...smoothTileOpts,
-      attribution: '© MapAnt + © National Land Survey of Finland (NLS/MML) — https://www.mapant.fi/'
-    }
-  );
-  
+  const [widthKm, heightKm, angleDeg, lat, lon] = nums;
+  // Näyttönimi: kaikki osat ennen viimeistä viittä yhdistettynä takaisin alaviivoilla
+  const labelBase = parts.slice(0, -5).join('_');
+
+  return { src: filename, widthKm, heightKm, angleDeg, lat, lon, labelBase, ext };
+}
+
+// Rakennetaan valintalista parsimalla GEOREF_FILES
+const overlaySelect = document.getElementById('overlaySelect');
+
+// "Ei karttaa" -vaihtoehto
+const emptyOpt = document.createElement('option');
+emptyOpt.value = '';
+emptyOpt.textContent = 'Ei karttaa';
+overlaySelect.appendChild(emptyOpt);
+
+// Parsitut tietueet indeksoituna tiedostonimellä
+const georefSpecs = {};
+
+GEOREF_FILES.forEach((entry, i) => {
+  // entry voi olla pelkkä merkkijono tai [tiedostonimi, "Oma nimi"]
+  const filename   = Array.isArray(entry) ? entry[0] : entry;
+  const customLabel = Array.isArray(entry) ? entry[1] : null;
+
+  const spec = parseGeorefFilename(filename);
+  if (!spec) {
+    console.warn('Ei georef-muoto, ohitetaan:', filename);
+    return;
+  }
+
+  georefSpecs[filename] = spec;
+
+  const opt = document.createElement('option');
+  opt.value = filename;
+  opt.textContent = customLabel || spec.labelBase;
+  // Valitaan ensimmäinen oletuksena
+  if (i === 0) opt.selected = true;
+  overlaySelect.appendChild(opt);
+});
 
 
-  
+// =========================
+// KARTTA
+// =========================
+const MML_API_KEY = '060d0c90-a4de-483c-8bb3-4d69bcf5b56f';
 
-  // =========================
-  // MML WMTS ORTO (vain z <= 15)
-  // =========================
-  const ortoWMTS = L.tileLayer(
-    `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
-    `&LAYER=ortokuva&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
-    `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg&api-key=${encodeURIComponent(MML_API_KEY)}`,
-    {
-      minZoom: 0,
-      maxZoom: 19,
-      attribution: 'Ortokuva © Maanmittauslaitos',
-      ...smoothTileOpts
-    }
-  );
+const map = L.map('map', {
+  minZoom: 13,
+  maxZoom: 18,
+  fadeAnimation: false
+});
 
-  // =========================
-  // MML:n maastokartta
-  // =========================
-  const maastoWMTS = L.tileLayer(
+// ☰-nappi
+const MoreControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd: function() {
+    const wrapper = L.DomUtil.create('div', 'leaflet-control-more leaflet-bar');
+    const btn = L.DomUtil.create('button', '', wrapper);
+    btn.id = 'moreBtn'; btn.type = 'button'; btn.title = 'Lisää'; btn.textContent = '☰';
+    L.DomEvent.disableClickPropagation(wrapper);
+    L.DomEvent.disableScrollPropagation(wrapper);
+    return wrapper;
+  }
+});
+map.addControl(new MoreControl());
+
+L.control.scale({ position: 'bottomleft', metric: true, imperial: false, maxWidth: 140 }).addTo(map);
+
+map.createPane('topLinePane');
+map.getPane('topLinePane').style.zIndex = 9999;
+
+const smoothTileOpts = { updateWhenIdle: true, updateWhenZooming: false, reuseTiles: true, keepBuffer: 3 };
+
+const esriLayer = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { attribution: 'Karttakuva © Esri & contributors', maxZoom: 19, ...smoothTileOpts }
+);
+
+const mapantLayer = L.tileLayer(
+  'https://wmts.mapant.fi/wmts_EPSG3857.php?z={z}&x={x}&y={y}',
+  { maxZoom: 19, ...smoothTileOpts, attribution: '© MapAnt + © NLS/MML' }
+);
+
+const ortoWMTS = L.tileLayer(
+  `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
+  `&LAYER=ortokuva&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
+  `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/jpeg&api-key=${encodeURIComponent(MML_API_KEY)}`,
+  { minZoom: 0, maxZoom: 19, attribution: 'Ortokuva © Maanmittauslaitos', ...smoothTileOpts }
+);
+
+const maastoWMTS = L.tileLayer(
   `https://avoin-karttakuva.maanmittauslaitos.fi/avoin/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0` +
   `&LAYER=maastokartta&STYLE=default&TILEMATRIXSET=WGS84_Pseudo-Mercator` +
-  `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}` +
-  `&FORMAT=image/png&api-key=${encodeURIComponent(MML_API_KEY)}`,
-  {
-    attribution: 'Maastokartta © Maanmittauslaitos',
-    maxZoom: 19,
-    ...smoothTileOpts
-  }
-  );
+  `&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png&api-key=${encodeURIComponent(MML_API_KEY)}`,
+  { attribution: 'Maastokartta © Maanmittauslaitos', maxZoom: 19, ...smoothTileOpts }
+);
 
+// =========================
+// POHJAKERROS
+// =========================
+let activeBaseLayer = null;
 
-
-  // =========================
-  // POHJAKERROKSEN HALLINTA
-  // =========================
-  let activeBaseLayer = null;
-
-  function desiredBaseLayer() {
+function desiredBaseLayer() {
     const base = document.querySelector('input[name="layer"]:checked').value;
 
-    if (base === 'satelliitti') return null; // Esri näkyy taustalla
-    if (base === 'maasto') return maastoWMTS;
-    if (base === 'rinnevarjoste') return rinnevarjosteLocal; // lokaalisti
-    if (base === 'mapant') return mapantLayer;
-    
-    if (base === 'orto') {
-      return ortoWMTS;
-    }
+    if (base === 'satelliitti') return esriLayer;
+    if (base === 'maasto')      return maastoWMTS;
+    if (base === 'mapant')      return mapantLayer;
+    if (base === 'orto')        return ortoWMTS;
+}
 
-    return null;
+updateBaseLayers();
+
+function setActiveBaseLayer(next) {
+  if (activeBaseLayer === next) return;
+  if (activeBaseLayer) map.removeLayer(activeBaseLayer);
+  activeBaseLayer = next;
+  if (activeBaseLayer) map.addLayer(activeBaseLayer);
+}
+
+function updateBaseLayers() { setActiveBaseLayer(desiredBaseLayer()); }
+
+// =========================
+// OVERLAY
+// =========================
+const overlayOnOffBtn = document.getElementById('overlayOnOffBtn');
+let overlayVisible = true;
+let overlayImg = null;
+let overlaySpec = null;
+
+function positionOverlayImg() {
+  if (!overlayImg || !overlaySpec) return;
+  const { lat, lon, widthKm, heightKm, angleDeg } = overlaySpec;
+  const latlng = L.latLng(lat, lon);
+  const center = map.latLngToLayerPoint(latlng);
+  const kmToPx = (km) => {
+    const p2 = map.latLngToLayerPoint(L.latLng(lat + (km / 111.32), lon));
+    return Math.abs(p2.y - center.y);
+  };
+  const widthPx  = kmToPx(widthKm);
+  const heightPx = kmToPx(heightKm);
+  overlayImg.style.width  = `${widthPx}px`;
+  overlayImg.style.height = `${heightPx}px`;
+  overlayImg.style.left   = `${center.x - widthPx  / 2}px`;
+  overlayImg.style.top    = `${center.y - heightPx / 2}px`;
+  overlayImg.style.transform = `rotate(${angleDeg}deg)`;
+}
+
+function removeOverlayImg() {
+  if (overlayImg && overlayImg.parentNode) overlayImg.parentNode.removeChild(overlayImg);
+  overlayImg = null;
+  overlaySpec = null;
+}
+
+function showOverlay(spec) {
+  overlaySpec = spec;
+  if (!overlayVisible || !overlaySpec) { removeOverlayImg(); return; }
+  if (!overlayImg) {
+    overlayImg = document.createElement('img');
+    overlayImg.style.cssText = 'position:absolute;opacity:1;pointer-events:none;z-index:999;transform-origin:center center;';
+    map.getPanes().overlayPane.appendChild(overlayImg);
   }
+  if (overlayImg.src !== new URL(spec.src, location.href).href) overlayImg.src = spec.src;
+  positionOverlayImg();
+}
 
-  function setActiveBaseLayer(next) {
-    if (activeBaseLayer === next) return;
-    if (activeBaseLayer) map.removeLayer(activeBaseLayer);
-    activeBaseLayer = next;
-    if (activeBaseLayer) map.addLayer(activeBaseLayer);
-  }
+function applyOverlayFromSelect() {
+  const filename = overlaySelect.value;
+  if (!overlayVisible || !filename) { removeOverlayImg(); return; }
+  showOverlay(georefSpecs[filename] || null);
+}
 
-  function updateBaseLayers() {
-    setActiveBaseLayer(desiredBaseLayer());
-  }
-  
-
-
-  // =========================
-  // OVERLAYT (ei välky)
-  // =========================
-  const overlaySelect = document.getElementById('overlaySelect');
-  const overlayOnOffBtn = document.getElementById('overlayOnOffBtn');
-  let overlayVisible = true;
-
-  let overlayImg = null;
-  let overlaySpec = null;
-
-  function positionOverlayImg() {
-    if (!overlayImg || !overlaySpec) return;
-
-    const { lat, lon, widthKm, heightKm, angleDeg } = overlaySpec;
-    const latlng = L.latLng(lat, lon);
-    const center = map.latLngToLayerPoint(latlng);
-
-    const kmToPx = (km) => {
-      const p2 = map.latLngToLayerPoint(L.latLng(lat + (km / 111.32), lon));
-      const p1 = map.latLngToLayerPoint(latlng);
-      return Math.abs(p2.y - p1.y);
-    };
-
-    const widthPx = kmToPx(widthKm);
-    const heightPx = kmToPx(heightKm);
-
-    overlayImg.style.width = `${widthPx}px`;
-    overlayImg.style.height = `${heightPx}px`;
-    overlayImg.style.left = `${center.x - widthPx / 2}px`;
-    overlayImg.style.top = `${center.y - heightPx / 2}px`;
-    overlayImg.style.transform = `rotate(${angleDeg}deg)`;
-  }
-
-  function removeOverlayImg() {
-    if (overlayImg && overlayImg.parentNode) overlayImg.parentNode.removeChild(overlayImg);
-    overlayImg = null;
-    overlaySpec = null;
-  }
-
-  function showOverlay(spec) {
-    overlaySpec = spec;
-
-    if (!overlayVisible || !overlaySpec) {
-      removeOverlayImg();
-      return;
-    }
-
-    if (!overlayImg) {
-      overlayImg = document.createElement('img');
-      overlayImg.style.position = 'absolute';
-      overlayImg.style.opacity = '1.0';
-      overlayImg.style.pointerEvents = 'none';
-      overlayImg.style.zIndex = '999';
-      overlayImg.style.transformOrigin = 'center center';
-      overlayImg.style.mixBlendMode = 'normal';
-      map.getPanes().overlayPane.appendChild(overlayImg);
-    }
-
-    if (overlayImg.src !== spec.src) overlayImg.src = spec.src;
-    positionOverlayImg();
-  }
-
-  function applyOverlayFromSelect() {
-    const v = overlaySelect.value;
-    if (!overlayVisible || !v) {
-      removeOverlayImg();
-      return;
-    }
-
-    const specs = {
-      esijukola_D1:   { src:'esijukola_D1.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      esijukola_D2:   { src:'esijukola_D2.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      esijukola_D3:   { src:'esijukola_D3.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      esijukola_H1:   { src:'esijukola_H1.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      esijukola_H2:   { src:'esijukola_H2.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      esijukola_H3:   { src:'esijukola_H3.jpg', lat:64.071931, lon:28.236007, widthKm:1.98,  heightKm:2.834, angleDeg:13.3 },
-      vanha:       { src:'vanha.png',    lat:64.121974, lon:28.259331,  widthKm:4.181,  heightKm:6.015,  angleDeg:11.2 },
-      rinnevarjoste:     { src:'rinnevarjoste.jpg', lat:64.10505, lon:28.24945, widthKm:6.63, heightKm:9.415, angleDeg:1.2 },            
-    };
-
-    showOverlay(specs[v] || null);
-  }
-
-  // =========================
-  // Punainen reitti
-  // Alla olevat koordinaatit saa suunnistusliiton karttarekisteri.fi kun liikuttaa kartan päällä hiirtä 
-  // ja katsoo WGS84-koordinaatteja alakulmassa.
-  // =========================
-  const punainenReitti = [
-    [64.1327, 28.2895],
-    [64.1300, 28.2951],
-    [64.1256, 28.3010],
-    [64.1232, 28.2981],
-    [64.1197, 28.2959],
-    [64.1184, 28.2916],
-    [64.1174, 28.2867],
-    [64.1143, 28.2846],
-    [64.1079, 28.2751],
-    [64.1064, 28.2754],
-    [64.1051, 28.2740],
-    [64.1050, 28.2622],
-    [64.1031, 28.2596],
-    [64.1017, 28.2557],
-    [64.1010, 28.2557],
-    [64.1015, 28.2527],
-    [64.1025, 28.2505],
-    [64.1035, 28.2497],
-    [64.1036, 28.2493],
-    [64.1027, 28.2482],
-    [64.1024, 28.2463],
-    [64.1020, 28.2448],
-    [64.1016, 28.2420],
-    [64.0999, 28.2421],
-    [64.0992, 28.2391],
-    [64.0992, 28.2360],
-    [64.1015, 28.2302],
-    [64.1026, 28.2257],
-    [64.1033, 28.2252],
-    [64.1036, 28.2231],
-    [64.1072, 28.2241],
-    [64.1155, 28.2258],
-    [64.1161, 28.2262],
-    [64.1165, 28.2277],
-    [64.1172, 28.2283],
-    [64.1194, 28.2322],
-    [64.1205, 28.2325],
-    [64.1209, 28.2343],
-    [64.1223, 28.2372],
-    [64.1226, 28.2362],
-    [64.1233, 28.2365],
-    [64.1250, 28.2345],
-    [64.1254, 28.2352],
-    [64.1257, 28.2350],
-    [64.1259, 28.2358],
-    [64.1256, 28.2376],
-    [64.1259, 28.2385],
-    [64.1266, 28.2394],
-    [64.1265, 28.2403],
-    [64.1275, 28.2434],
-    [64.1291, 28.2402],
-    [64.1297, 28.2403],
-    [64.1309, 28.2440],
-    [64.1320, 28.2436],
-    [64.1335, 28.2467],
-    [64.1363, 28.2574],
-    [64.1357, 28.2614],
-    [64.1360, 28.2660],
-    [64.1351, 28.2659],
-    [64.1347, 28.2692],
-    [64.1352, 28.2698],
-    [64.1350, 28.2704],
-    [64.1345, 28.2704],
-    [64.1343, 28.2699],
-    [64.1334, 28.2713],
-    [64.1347, 28.2740],
-    [64.1345, 28.2768],
-    [64.1340, 28.2768],
-    [64.1338, 28.2781],
-    [64.1329, 28.2779],
-    [64.1322, 28.2813],
-    [64.1326, 28.2843],
-    [64.1319, 28.2850],
-    [64.1323, 28.2887],
-    [64.1327, 28.2895]
-  ];
-
-  L.polyline(punainenReitti, {
+// =========================
+// PUNAINEN REITTI
+// =========================
+const punainenReitti = HARJOITUSKIELTOALUE;
+const punainenPolyline = L.polyline(punainenReitti, {
     color: 'red',
     weight: 15,
     opacity: 0.3,
     lineCap: 'round',
     lineJoin: 'round',
     pane: 'topLinePane'
-  }).addTo(map);
+}).addTo(map);
 
-  // =========================
-  // SATUNNAINEN RASTIVÄLI
-  // =========================
+map.fitBounds(punainenPolyline.getBounds(), {
+    padding: [30, 30]
+});
 
-  // Piste polygonin sisällä (ray casting -algoritmi).
-  // polygon: array of [lat, lon]; point: [lat, lon]
-  function pointInPolygon(point, polygon) {
-    const [y, x] = point; // y = lat, x = lon
-    let inside = false;
-    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-      const yi = polygon[i][0], xi = polygon[i][1];
-      const yj = polygon[j][0], xj = polygon[j][1];
-      const intersect = ((yi > y) !== (yj > y)) &&
-        (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-      if (intersect) inside = !inside;
-    }
-    return inside;
+const reittiBounds = polygonBounds(punainenReitti);
+
+// =========================
+// SATUNNAINEN RASTIVÄLI
+// =========================
+function pointInPolygon(point, polygon) {
+  const [y,x] = point; let inside = false;
+  for (let i=0,j=polygon.length-1; i<polygon.length; j=i++) {
+    const yi=polygon[i][0],xi=polygon[i][1],yj=polygon[j][0],xj=polygon[j][1];
+    if (((yi>y)!==(yj>y)) && (x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
   }
+  return inside;
+}
+function polygonBounds(p) {
+  let minLat=Infinity,maxLat=-Infinity,minLon=Infinity,maxLon=-Infinity;
+  p.forEach(([la,lo])=>{ if(la<minLat)minLat=la; if(la>maxLat)maxLat=la; if(lo<minLon)minLon=lo; if(lo>maxLon)maxLon=lo; });
+  return {minLat,maxLat,minLon,maxLon};
+}
 
-  // Polygonin bounding box, käytetään rejection samplingiin
-  function polygonBounds(polygon) {
-    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity;
-    polygon.forEach(([lat, lon]) => {
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-      if (lon < minLon) minLon = lon;
-      if (lon > maxLon) maxLon = lon;
-    });
-    return { minLat, maxLat, minLon, maxLon };
+function randomPointInPolygon(polygon,bounds,maxTries=2000) {
+  for(let i=0;i<maxTries;i++){
+    const lat=bounds.minLat+Math.random()*(bounds.maxLat-bounds.minLat);
+    const lon=bounds.minLon+Math.random()*(bounds.maxLon-bounds.minLon);
+    if(pointInPolygon([lat,lon],polygon)) return [lat,lon];
   }
-
-  const reittiBounds = polygonBounds(punainenReitti);
-
-  // Satunnainen piste rajaavan polygonin sisällä (rejection sampling)
-  function randomPointInPolygon(polygon, bounds, maxTries = 2000) {
-    for (let i = 0; i < maxTries; i++) {
-      const lat = bounds.minLat + Math.random() * (bounds.maxLat - bounds.minLat);
-      const lon = bounds.minLon + Math.random() * (bounds.maxLon - bounds.minLon);
-      if (pointInPolygon([lat, lon], polygon)) {
-        return [lat, lon];
-      }
-    }
-    return null; // ei löytynyt (ei pitäisi tapahtua järkevällä polygonilla)
+  return null;
+}
+function gaussianRandom(mean,stdDev){
+  let u=0,v=0;
+  while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  return mean+Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)*stdDev;
+}
+function metersToLatDeg(m){return m/111320;}
+function metersToLonDeg(m,atLat){return m/(111320*Math.cos(atLat*Math.PI/180));}
+function randomSecondPoint(p1,polygon,bounds,mean,std,maxTries=4000){
+  const [lat0,lon0]=p1;
+  for(let i=0;i<maxTries;i++){
+    let dist=gaussianRandom(mean,std); if(dist<20)continue;
+    const ang=Math.random()*2*Math.PI;
+    const c=[lat0+metersToLatDeg(dist*Math.cos(ang)),lon0+metersToLonDeg(dist*Math.sin(ang),lat0)];
+    if(pointInPolygon(c,polygon))return c;
   }
+  return null;
+}
+let legLayerGroup=null;
+function clearLeg(){if(legLayerGroup){map.removeLayer(legLayerGroup);legLayerGroup=null;}}
+function drawLeg(p1,p2){
+  clearLeg(); legLayerGroup=L.layerGroup().addTo(map);
+  const c='#d50071';
+  L.polyline([p1,p2],{color:c,weight:6,opacity:0.75,pane:'topLinePane'}).addTo(legLayerGroup);
+  [p1,p2].forEach(pt=>L.circleMarker(pt,{radius:25,color:c,weight:6,opacity:0.75,fill:false,pane:'topLinePane'}).addTo(legLayerGroup));
+}
+function createRandomLeg(){
+  const p1=randomPointInPolygon(punainenReitti,reittiBounds);
+  if(!p1){alert('Arpominen epäonnistui, yritä uudelleen.');return;}
+  const p2=randomSecondPoint(p1,punainenReitti,reittiBounds,600,350);
+  if(!p2){createRandomLeg();return;}
+  drawLeg(p1,p2);
+  map.flyToBounds(L.latLngBounds([p1,p2]),{paddingTopLeft:[70,70],paddingBottomRight:[70,70],maxZoom:18,duration:0.75});
+}
 
-  // Box-Muller-muunnos: palauttaa normaalijakautuneen satunnaisluvun (mean, stdDev)
-  function gaussianRandom(mean, stdDev) {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    const standardNormal = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    return mean + standardNormal * stdDev;
-  }
+document.getElementById('randomLegBtn').addEventListener('click',createRandomLeg);
+document.getElementById('clearLegBtn').addEventListener('click',clearLeg);
 
-  // Karkea muunnos metreistä asteiksi annetulla leveysasteella
-  function metersToLatDeg(m) { return m / 111320; }
-  function metersToLonDeg(m, atLat) { return m / (111320 * Math.cos(atLat * Math.PI / 180)); }
+// =========================
+// UI-EVENTIT
+// =========================
+document.querySelectorAll('input[name="layer"]').forEach(el=>el.addEventListener('change',()=>{updateBaseLayers();}));
+overlaySelect.addEventListener('change', applyOverlayFromSelect);
+overlayOnOffBtn.addEventListener('click',()=>{
+  overlayVisible=!overlayVisible;
+  overlayOnOffBtn.classList.toggle('off',!overlayVisible);
+  overlaySelect.disabled=!overlayVisible;
+  if(!overlayVisible)removeOverlayImg(); else applyOverlayFromSelect();
+});
+map.on('zoomend',()=>{updateBaseLayers();positionOverlayImg();});
+map.on('move',positionOverlayImg);
 
-  // Etsii toisen pisteen ensimmäisen läheltä niin, että:
-  // - etäisyys noudattaa Gaussin jakaumaa (mean, stdDev metreinä)
-  // - piste on polygonin sisällä
-  function randomSecondPoint(firstPoint, polygon, bounds, meanDist, stdDev, maxTries = 4000) {
-    const [lat0, lon0] = firstPoint;
-    for (let i = 0; i < maxTries; i++) {
-      // Gaussin jakaumasta etäisyys (negatiiviset/liian pienet hylätään ja arvotaan uudelleen)
-      let dist = gaussianRandom(meanDist, stdDev);
-      if (dist < 20) continue; // ei käytännössä päällekkäisiä pisteitä
+function setupCollapse(boxId,btnId){
+  const box=document.getElementById(boxId),btn=document.getElementById(btnId);
+  let c=false;
+  btn.addEventListener('click',()=>{c=!c;box.classList.toggle('collapsed',c);btn.textContent=c?'▼':'▲';});
+}
+setupCollapse('layerToggle','collapseBtn1');
+setupCollapse('overlayToggle','collapseBtn2');
+setupCollapse('legToggle','collapseBtn3');
 
-      const angle = Math.random() * 2 * Math.PI;
-      const dLat = metersToLatDeg(dist * Math.cos(angle));
-      const dLon = metersToLonDeg(dist * Math.sin(angle), lat0);
+const moreBtn=document.getElementById('moreBtn'),moreModal=document.getElementById('moreModal'),moreCloseBtn=document.getElementById('moreCloseBtn');
+function openMore(){moreModal.classList.add('open');moreModal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+function closeMore(){moreModal.classList.remove('open');moreModal.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+moreBtn.addEventListener('click',openMore);
+moreCloseBtn.addEventListener('click',closeMore);
+moreModal.addEventListener('click',(e)=>{if(e.target===moreModal)closeMore();});
+document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&moreModal.classList.contains('open'))closeMore();});
 
-      const candidate = [lat0 + dLat, lon0 + dLon];
-      if (pointInPolygon(candidate, polygon)) {
-        return candidate;
-      }
-    }
-    return null;
-  }
+// Käynnistys
+updateBaseLayers();
+applyOverlayFromSelect();
 
-  // Rastivälin piirtokerros (viiva + 2 ympyrää), pidetään viite että voi poistaa
-  let legLayerGroup = null;
-
-  function clearLeg() {
-    if (legLayerGroup) {
-      map.removeLayer(legLayerGroup);
-      legLayerGroup = null;
-    }
-  }
-
-  function drawLeg(p1, p2) {
-    clearLeg();
-
-    legLayerGroup = L.layerGroup().addTo(map);
-
-    const legColor = '#d50071';
-
-    L.polyline([p1, p2], {
-      color: legColor,
-      weight: 6,
-      opacity: 0.75,
-      pane: 'topLinePane'
-    }).addTo(legLayerGroup);
-
-    // 50 px halkaisija -> radius 25 px. circleMarker:n radius on pikseleinä (ei metreinä),
-    // joten ympyrän koko pysyy samana kaikilla zoom-tasoilla.
-    // fillOpacity: 0 -> piirretään vain ympyrän reuna, ei täytettä.
-    [p1, p2].forEach(pt => {
-      L.circleMarker(pt, {
-        radius: 25,
-        color: legColor,
-        weight: 6,
-        opacity: 0.75,
-        fill: false,
-        pane: 'topLinePane'
-      }).addTo(legLayerGroup);
-    });
-  }
-
-  function createRandomLeg() {
-    // Tavoiteetäisyyksien parametrit (metreinä).
-    // Mean ja stdDev valittu niin että ne sopivat tämän kilpailualueen mittakaavaan
-    // (alue on n. 4-5 km leveä / korkea). Säädä tarvittaessa.
-    const meanDist = 600;   // keskietäisyys, m
-    const stdDev = 350;     // hajonta, m
-
-    const p1 = randomPointInPolygon(punainenReitti, reittiBounds);
-    if (!p1) {
-      alert('Ensimmäisen pisteen arpominen epäonnistui. Yritä uudelleen.');
-      return;
-    }
-
-    const p2 = randomSecondPoint(p1, punainenReitti, reittiBounds, meanDist, stdDev);
-    if (!p2) {
-      // Harvinainen tapaus: ei löytynyt sopivaa toista pistettä, yritetään koko funktiota uudelleen
-      createRandomLeg();
-      return;
-    }
-
-    drawLeg(p1, p2);
-
-    // Zoomaa/keskitä niin että koko rastiväli (molemmat pisteet + 50px ympyrät) näkyy.
-    // padding antaa marginaalia reunoille niin ympyrät eivät jää kartan reunan ulkopuolelle.
-    const legBounds = L.latLngBounds([p1, p2]);
-    map.flyToBounds(legBounds, {
-      paddingTopLeft: [70, 70],
-      paddingBottomRight: [70, 70],
-      maxZoom: 18,
-      duration: 0.75
-    });
-  }
-
-  document.getElementById('randomLegBtn').addEventListener('click', createRandomLeg);
-  document.getElementById('clearLegBtn').addEventListener('click', clearLeg);
-
-  // =========================
-  // UI-eventit
-  // =========================
-  function updateAll() {
-    updateBaseLayers();
-    applyOverlayFromSelect();
-  }
-
-  document.querySelectorAll('input[name="layer"]').forEach(el => {
-    el.addEventListener('change', updateAll);
-  });
-
-  overlaySelect.addEventListener('change', applyOverlayFromSelect);
-
-  overlayOnOffBtn.addEventListener('click', () => {
-    overlayVisible = !overlayVisible;
-    overlayOnOffBtn.classList.toggle('off', !overlayVisible);
-    overlaySelect.disabled = !overlayVisible;
-
-    if (!overlayVisible) removeOverlayImg();
-    else applyOverlayFromSelect();
-  });
-
-  map.on('zoomend', () => {
-    updateBaseLayers();    
-    positionOverlayImg();
-  });
-
-  map.on('move', () => {
-    positionOverlayImg();
-  });
-
-  function setupCollapse(boxId, btnId) {
-    const box = document.getElementById(boxId);
-    const btn = document.getElementById(btnId);
-    let collapsed = false;
-    btn.addEventListener('click', () => {
-      collapsed = !collapsed;
-      box.classList.toggle('collapsed', collapsed);
-      btn.textContent = collapsed ? '▼' : '▲';
-    });
-  }
-  setupCollapse('layerToggle', 'collapseBtn1');
-  setupCollapse('overlayToggle', 'collapseBtn2');
-  setupCollapse('legToggle', 'collapseBtn3');
-
-  // =========================
-  // ☰ Lisää-modal (avaa/sulje)
-  // =========================
-  const moreBtn = document.getElementById('moreBtn');
-  const moreModal = document.getElementById('moreModal');
-  const moreCloseBtn = document.getElementById('moreCloseBtn');
-
-  function openMore() {
-    moreModal.classList.add('open');
-    moreModal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeMore() {
-    moreModal.classList.remove('open');
-    moreModal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-  }
-
-  moreBtn.addEventListener('click', openMore);
-  moreCloseBtn.addEventListener('click', closeMore);
-
-  // Klikkaus taustaan sulkee (mutta ei kortin sisään)
-  moreModal.addEventListener('click', (e) => {
-    if (e.target === moreModal) closeMore();
-  });
-
-  // ESC sulkee
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && moreModal.classList.contains('open')) closeMore();
-  });
-
-  // Käynnistys
-  updateAll();
 </script>
-
 </body>
 </html>

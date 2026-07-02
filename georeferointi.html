@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>DOM-overlay kartalla</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    #map { height: 100%; }
+
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      max-width: 330px;
+      user-select: none;
+    }
+    #controls h4 { margin: 8px 0 6px; font-size: 13px; letter-spacing: .2px; color: #333; }
+    #controls .row { margin-bottom: 8px; }
+    #controls label { display: inline-block; margin: 3px 0; }
+    #controls input[type="range"], #controls input[type="number"] { width: 150px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      min-height: 46px;
+      padding: 6px 10px;
+      border: 1px solid #cfcfcf;
+      border-radius: 12px;
+      background: #f8f8f8;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+      transition: transform .02s ease, background .2s ease;
+    }
+    .btn:active { transform: translateY(1px); background: #f0f0f0; }
+    .btn.sm { min-width: 36px; min-height: 36px; font-size: 14px; border-radius: 10px; }
+    .btn.wide {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      gap: 8px;
+    }
+    .btn.wide.save { background: #e8f4e8; border-color: #a8d5a8; margin-top: 6px; }
+    .btn.wide.save:active { background: #d0ebd0; }
+
+    .dpad {
+      display: grid;
+      grid-template-columns: 44px 44px 44px;
+      grid-template-rows: 44px 44px 44px;
+      gap: 5px;
+      align-items: center;
+      justify-items: center;
+    }
+    .dpad .spacer { visibility: hidden; }
+    .dpad .btn { min-width: 44px; min-height: 44px; }
+    .section {
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .pair { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .pair .btn { min-width: 44px; min-height: 44px; }
+    .col { display:flex; flex-direction: column; gap:8px; align-items:flex-start; }
+    .segment { display: inline-flex; border:1px solid #d0d0d0; border-radius: 10px; overflow: hidden; }
+    .segment button { padding: 6px 8px; font-size: 12px; background:#fff; border:0; cursor:pointer; }
+    .segment button+button { border-left:1px solid #d0d0d0; }
+    .segment button.active { background:#222; color:#fff; }
+    .muted { color:#666; font-size:12px; }
+    .checkrow { display:flex; align-items:center; gap:8px; margin-top:6px; }
+    .checkrow input[type="checkbox"] { width:18px; height:18px; cursor:pointer; }
+    .checkrow label { cursor:pointer; }
+    #fileInput { display:none; }
+    canvas.grid-overlay { position:absolute; left:0; top:0; pointer-events:none; z-index:450; }
+    .crosshair { position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none; z-index:451; display:none; }
+    .crosshair .v, .crosshair .h { position:absolute; background:rgba(255,0,0,.55); }
+    .crosshair .v { width:1px; height:100%; left:50%; transform:translateX(-.5px); }
+    .crosshair .h { height:1px; width:100%; top:50%; transform:translateY(-.5px); }
+    #controls.dragging { opacity: .9; cursor: move; }
+    .basemap-btn.active { background: #222; color: #fff; border-color: #222; }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <div class="section">
+    <button class="btn wide" id="pickFileBtn">📂 Valitse karttatiedosto</button>
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="muted" id="fileNameLabel" style="margin-top:6px;">Ei tiedostoa valittuna (käytetään kartta.jpg)</div>
+    <button class="btn wide save" id="saveFileBtn">💾 Tallenna georeferoitu kuva</button>
+  </div>
+
+  <div class="section">
+    <h4>Sijainti (D-pad)</h4>
+    <div class="dpad">
+      <span class="spacer"></span>
+      <button class="btn" id="nudgeUp" title="Siirrä ylös (↑)">↑</button>
+      <span class="spacer"></span>
+      <button class="btn" id="nudgeLeft" title="Siirrä vasemmalle (←)">←</button>
+      <span class="spacer"></span>
+      <button class="btn" id="nudgeRight" title="Siirrä oikealle (→)">→</button>
+      <span class="spacer"></span>
+      <button class="btn" id="nudgeDown" title="Siirrä alas (↓)">↓</button>
+      <span class="spacer"></span>
+    </div>
+    <div style="margin-top:6px;">
+      <div class="segment" id="stepSegment">
+        <button data-step="fine" class="active">Fine</button>
+        <button data-step="normal">Normal</button>
+        <button data-step="coarse">Coarse</button>
+        <button data-step="huge">Huge</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Koko</h4>
+    <div class="checkrow">
+      <input type="checkbox" id="keepAspect" checked>
+      <label for="keepAspect">Säilytä mittasuhteet</label>
+    </div>
+    <div class="row" style="margin-top:8px;">
+      <label>Leveys (km): <input id="width" type="number" step="0.01" value="1.5"></label><br>
+      <div class="pair">
+        <button class="btn" id="widthDec" title="Leveys − (A)">−</button>
+        <button class="btn" id="widthInc" title="Leveys + (D)">+</button>
+      </div>
+    </div>
+    <div class="row">
+      <label>Korkeus (km): <input id="height" type="number" step="0.01" value="1.0"></label><br>
+      <div class="col">
+        <button class="btn" id="heightInc" title="Korkeus + (W)">+</button>
+        <button class="btn" id="heightDec" title="Korkeus − (S)">−</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Kierto ja läpinäkyvyys</h4>
+    <div class="row pair">
+      <label>Kierto (deg): <input id="angle" type="number" step="0.1" min="-180" max="180" value="0"> <span id="angleVal">0</span>°</label>
+      <button class="btn" id="angleDec" title="Kierto − (Q)">⟲</button>
+      <button class="btn" id="angleInc" title="Kierto + (E)">⟳</button>
+    </div>
+    <div class="row">
+      <label>Läpinäkyvyys: <input id="opacity" type="range" min="0" max="1" step="0.01" value="0.7"></label>
+      <button class="btn sm" id="toggleOverlayBtn" title="Näytä/Piilota (Space)">👁</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Taustakartta</h4>
+    <div id="basemapBtns" style="display:flex; flex-wrap:wrap; gap:6px;">
+      <button class="btn sm basemap-btn active" data-layer="satellite">🛰 Satelliitti (Esri)</button>
+      <button class="btn sm basemap-btn" data-layer="topo">⛰ Maastokartta</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Lisäasetukset</h4>
+    <div class="row">
+      <label>Lat: <input id="lat" type="number" step="0.0001" value="60.32"></label>
+    </div>
+    <div class="row">
+      <label>Lon: <input id="lon" type="number" step="0.0001" value="24.97"></label>
+    </div>
+    <div class="row">
+      <button class="btn sm" id="toggleGrid" title="Ruudukko päälle/pois (G)">Ruudukko</button>
+      <button class="btn sm" id="toggleCrosshair" title="Ristikko päälle/pois (X)">Ristikko</button>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+<canvas id="gridCanvas" class="grid-overlay"></canvas>
+<div id="crosshair" class="crosshair"><div class="v"></div><div class="h"></div></div>
+
+<script>
+// --- Map init ---
+const map = L.map('map').setView([60.32, 24.97], 13);
+
+// Tile layer definitions
+const tileLayers = {
+  satellite: L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: '© Esri — World Imagery', maxZoom: 19 }
+  ),
+  topo: L.tileLayer(
+    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    { attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)', maxZoom: 17 }
+  )
+};
+
+let activeBaseLayer = tileLayers.satellite;
+activeBaseLayer.addTo(map);
+
+// Basemap switcher
+document.getElementById('basemapBtns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.basemap-btn');
+  if (!btn) return;
+  const key = btn.dataset.layer;
+  if (!tileLayers[key] || key === activeBaseLayer._key) return;
+  map.removeLayer(activeBaseLayer);
+  activeBaseLayer = tileLayers[key];
+  activeBaseLayer._key = key;
+  activeBaseLayer.addTo(map);
+  // Varmistetaan että overlay pysyy taustakartan päällä
+  if (imgElement && imgElement.parentNode) map.getPanes().overlayPane.appendChild(imgElement);
+  document.querySelectorAll('.basemap-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+});
+// Merkitään avain myös oletukselle
+tileLayers.satellite._key = 'satellite';
+
+// --- Overlay state ---
+let imgElement = null;
+let overlayVisible = true;
+let currentImageSrc = 'kartta.jpg';
+let imageAspectRatio = null;
+let originalFileName = 'kartta.jpg'; // tracked for suggested save name
+
+// Step presets — "huge" is 10× coarse
+const steps = {
+  fine:   { dLatLon: 0.00005, dSize: 0.005, dAngle: 0.1 },
+  normal: { dLatLon: 0.00010, dSize: 0.010, dAngle: 0.5 },
+  coarse: { dLatLon: 0.00050, dSize: 0.050, dAngle: 2.0 },
+  huge:   { dLatLon: 0.00500, dSize: 0.500, dAngle: 20.0 }
+};
+let currentStep = 'normal';
+
+function getEl(id){ return document.getElementById(id); }
+
+function updateOverlay() {
+  const lat = parseFloat(getEl('lat').value);
+  const lon = parseFloat(getEl('lon').value);
+  const widthKm = parseFloat(getEl('width').value);
+  const heightKm = parseFloat(getEl('height').value);
+  const angleDeg = parseFloat(getEl('angle').value);
+  const opacity = parseFloat(getEl('opacity').value);
+  getEl('angleVal').textContent = isFinite(angleDeg) ? angleDeg.toFixed(1) : '';
+
+  if (imgElement && imgElement.parentNode) {
+    imgElement.parentNode.removeChild(imgElement);
+  }
+  if (!overlayVisible) return;
+
+  const latlng = L.latLng(lat, lon);
+  const center = map.latLngToLayerPoint(latlng);
+
+  const kmToPx = (km) => {
+    const p1 = map.latLngToLayerPoint(latlng);
+    const p2 = map.latLngToLayerPoint(L.latLng(lat + (km / 111.32), lon));
+    return Math.abs(p2.y - p1.y);
+  };
+
+  const widthPx = kmToPx(widthKm);
+  const heightPx = kmToPx(heightKm);
+
+  imgElement = document.createElement('img');
+  imgElement.src = currentImageSrc;
+  imgElement.style.cssText = `
+    position:absolute;
+    width:${widthPx}px; height:${heightPx}px;
+    left:${center.x - widthPx / 2}px; top:${center.y - heightPx / 2}px;
+    transform:rotate(${angleDeg}deg); transform-origin:center center;
+    opacity:${opacity}; pointer-events:none;
+  `;
+  imgElement.classList.add('custom-overlay');
+  map.getPanes().overlayPane.appendChild(imgElement);
+
+  drawGrid();
+  updateCrosshair();
+}
+
+function toggleOverlay() {
+  overlayVisible = !overlayVisible;
+  updateOverlay();
+}
+
+// --- File picker ---
+const pickFileBtn = getEl('pickFileBtn');
+const fileInput   = getEl('fileInput');
+const fileNameLabel = getEl('fileNameLabel');
+const keepAspectCheckbox = getEl('keepAspect');
+
+pickFileBtn.addEventListener('click', () => fileInput.click());
+
+function centerAnchorOnMapView() {
+  const c = map.getCenter();
+  getEl('lat').value = c.lat.toFixed(6);
+  getEl('lon').value = c.lng.toFixed(6);
+}
+
+function finishLoadingImage(src, naturalWidth, naturalHeight, displayName) {
+  if (currentImageSrc && currentImageSrc.startsWith('blob:')) URL.revokeObjectURL(currentImageSrc);
+  imageAspectRatio = naturalHeight / naturalWidth;
+  currentImageSrc = src;
+  originalFileName = displayName;
+  fileNameLabel.textContent = displayName;
+
+  if (keepAspectCheckbox.checked) {
+    const newWidth = 1.5;
+    getEl('width').value = newWidth.toFixed(3);
+    getEl('height').value = (newWidth * imageAspectRatio).toFixed(3);
+  }
+  centerAnchorOnMapView();
+  updateOverlay();
+}
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const objectUrl = URL.createObjectURL(file);
+  const probe = new Image();
+  probe.onload = () => finishLoadingImage(objectUrl, probe.naturalWidth, probe.naturalHeight, file.name);
+  probe.onerror = () => { fileNameLabel.textContent = 'Tiedostoa ei voitu lukea kuvana: ' + file.name; };
+  probe.src = objectUrl;
+});
+
+// --- Save file with georef info baked into filename ---
+getEl('saveFileBtn').addEventListener('click', () => {
+  // Build suggested filename:
+  // <basename>_<width>_<height>_<angle>_<lat>_<lon>.<ext>
+  const width  = parseFloat(getEl('width').value);
+  const height = parseFloat(getEl('height').value);
+  const angle  = parseFloat(getEl('angle').value);
+  const lat    = parseFloat(getEl('lat').value);
+  const lon    = parseFloat(getEl('lon').value);
+
+  // Split original name into base + extension
+  const dotIdx = originalFileName.lastIndexOf('.');
+  const base = dotIdx >= 0 ? originalFileName.slice(0, dotIdx) : originalFileName;
+  const ext  = dotIdx >= 0 ? originalFileName.slice(dotIdx)    : '.jpg';
+
+  const suffix = `_${width.toFixed(3)}_${height.toFixed(3)}_${angle.toFixed(1)}_${lat.toFixed(5)}_${lon.toFixed(5)}`;
+  const suggestedName = base + suffix + ext;
+
+  // Draw the current image to a canvas so we can export it as a file
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+
+    // Determine output MIME type from extension
+    const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+    const mime = mimeMap[ext.toLowerCase()] || 'image/jpeg';
+    const quality = mime === 'image/jpeg' ? 0.95 : undefined;
+
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = suggestedName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    }, mime, quality);
+  };
+  img.onerror = () => alert('Kuvan lukeminen epäonnistui. Varmista että tiedosto on valittu.');
+  // If src is a blob URL we can use it directly; for the default 'kartta.jpg'
+  // the same-origin check applies — if the file is served from the same folder it works.
+  img.crossOrigin = 'anonymous';
+  img.src = currentImageSrc;
+});
+
+// --- Säilytä mittasuhteet ---
+keepAspectCheckbox.addEventListener('change', () => {
+  if (keepAspectCheckbox.checked && imageAspectRatio) {
+    const newWidth = 1.5;
+    getEl('width').value = newWidth.toFixed(3);
+    getEl('height').value = (newWidth * imageAspectRatio).toFixed(3);
+    updateOverlay();
+  }
+});
+
+function syncAspect(dimension) {
+  if (!keepAspectCheckbox.checked || !imageAspectRatio) return;
+  if (dimension === 'width') {
+    const w = parseFloat(getEl('width').value);
+    if (isFinite(w)) getEl('height').value = (w * imageAspectRatio).toFixed(3);
+  } else {
+    const h = parseFloat(getEl('height').value);
+    if (isFinite(h) && imageAspectRatio > 0) getEl('width').value = (h / imageAspectRatio).toFixed(3);
+  }
+}
+
+// --- Grid ---
+let gridOn = false;
+const gridCanvas = document.getElementById('gridCanvas');
+function drawGrid(){
+  gridCanvas.width  = map.getSize().x;
+  gridCanvas.height = map.getSize().y;
+  gridCanvas.style.width  = map.getSize().x + 'px';
+  gridCanvas.style.height = map.getSize().y + 'px';
+  gridCanvas.style.display = gridOn ? 'block' : 'none';
+  if (!gridOn) return;
+  const ctx = gridCanvas.getContext('2d');
+  ctx.clearRect(0,0,gridCanvas.width,gridCanvas.height);
+  ctx.globalAlpha = 0.35; ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 1;
+  for (let x=0; x<=gridCanvas.width; x+=100){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,gridCanvas.height); ctx.stroke(); }
+  for (let y=0; y<=gridCanvas.height; y+=100){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(gridCanvas.width,y); ctx.stroke(); }
+  const lat = parseFloat(getEl('lat').value), lon = parseFloat(getEl('lon').value);
+  const pt = map.latLngToContainerPoint([lat,lon]);
+  ctx.globalAlpha = 0.6; ctx.lineWidth = 2; ctx.strokeStyle = '#ff3b30';
+  ctx.beginPath(); ctx.moveTo(pt.x,0); ctx.lineTo(pt.x,gridCanvas.height); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,pt.y); ctx.lineTo(gridCanvas.width,pt.y); ctx.stroke();
+}
+
+// --- Crosshair ---
+let crosshairOn = false;
+const crosshair = document.getElementById('crosshair');
+function updateCrosshair(){
+  crosshair.style.display = crosshairOn ? 'block' : 'none';
+  if (!crosshairOn) return;
+  const lat = parseFloat(getEl('lat').value), lon = parseFloat(getEl('lon').value);
+  const pt = map.latLngToContainerPoint([lat,lon]);
+  crosshair.querySelector('.v').style.left = pt.x + 'px';
+  crosshair.querySelector('.h').style.top  = pt.y + 'px';
+}
+
+// --- Input bindings ---
+getEl('opacity').addEventListener('input', updateOverlay);
+getEl('angle').addEventListener('input', updateOverlay);
+['lat','lon'].forEach(id => getEl(id).addEventListener('input', updateOverlay));
+getEl('width').addEventListener('input',  () => { syncAspect('width');  updateOverlay(); });
+getEl('height').addEventListener('input', () => { syncAspect('height'); updateOverlay(); });
+
+// Step selector
+const stepSegment = document.getElementById('stepSegment');
+stepSegment.addEventListener('click', (e)=>{
+  if (e.target.tagName !== 'BUTTON') return;
+  [...stepSegment.querySelectorAll('button')].forEach(b=>b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentStep = e.target.dataset.step;
+});
+
+// Nudge helpers
+function clamp(val, min, max){ return Math.min(max, Math.max(min, val)); }
+function nudgeLat(d){   getEl('lat').value = (parseFloat(getEl('lat').value) + steps[currentStep].dLatLon * d).toFixed(6); updateOverlay(); }
+function nudgeLon(d){   getEl('lon').value = (parseFloat(getEl('lon').value) + steps[currentStep].dLatLon * d).toFixed(6); updateOverlay(); }
+function nudgeWidth(d){ const v = Math.max(0.001, parseFloat(getEl('width').value) + steps[currentStep].dSize * d); getEl('width').value = v.toFixed(3); syncAspect('width');  updateOverlay(); }
+function nudgeHeight(d){ const v = Math.max(0.001, parseFloat(getEl('height').value) + steps[currentStep].dSize * d); getEl('height').value = v.toFixed(3); syncAspect('height'); updateOverlay(); }
+function nudgeAngle(d){ const v = parseFloat(getEl('angle').value) + steps[currentStep].dAngle * d; getEl('angle').value = clamp(v, -180, 180).toFixed(1); updateOverlay(); }
+
+// D-pad & size/angle buttons
+getEl('nudgeUp').addEventListener('mousedown',    ()=>repeatHold(()=>nudgeLat(1)));
+getEl('nudgeDown').addEventListener('mousedown',  ()=>repeatHold(()=>nudgeLat(-1)));
+getEl('nudgeLeft').addEventListener('mousedown',  ()=>repeatHold(()=>nudgeLon(-1)));
+getEl('nudgeRight').addEventListener('mousedown', ()=>repeatHold(()=>nudgeLon(1)));
+getEl('widthInc').addEventListener('mousedown',   ()=>repeatHold(()=>nudgeWidth(1)));
+getEl('widthDec').addEventListener('mousedown',   ()=>repeatHold(()=>nudgeWidth(-1)));
+getEl('heightInc').addEventListener('mousedown',  ()=>repeatHold(()=>nudgeHeight(1)));
+getEl('heightDec').addEventListener('mousedown',  ()=>repeatHold(()=>nudgeHeight(-1)));
+getEl('angleInc').addEventListener('mousedown',   ()=>repeatHold(()=>nudgeAngle(1)));
+getEl('angleDec').addEventListener('mousedown',   ()=>repeatHold(()=>nudgeAngle(-1)));
+
+getEl('toggleOverlayBtn').addEventListener('click', toggleOverlay);
+getEl('toggleGrid').addEventListener('click',       ()=>{ gridOn = !gridOn; drawGrid(); });
+getEl('toggleCrosshair').addEventListener('click',  ()=>{ crosshairOn = !crosshairOn; updateCrosshair(); });
+
+// Repeat-on-hold
+let holdTimer = null, holdInterval = null;
+function repeatHold(fn){
+  fn();
+  clearTimers();
+  holdTimer = setTimeout(()=>{ holdInterval = setInterval(fn, 50); }, 300);
+  const stop = ()=>{ clearTimers(); document.removeEventListener('mouseup', stop); document.removeEventListener('touchend', stop); };
+  document.addEventListener('mouseup', stop);
+  document.addEventListener('touchend', stop);
+}
+function clearTimers(){ clearTimeout(holdTimer); holdTimer=null; clearInterval(holdInterval); holdInterval=null; }
+
+// Keyboard shortcuts
+window.addEventListener('keydown', (e)=>{
+  const saved = currentStep;
+  if (e.shiftKey) currentStep = 'coarse';
+  else if (e.altKey) currentStep = 'fine';
+  switch(e.key){
+    case 'ArrowUp':    e.preventDefault(); nudgeLat(1);    break;
+    case 'ArrowDown':  e.preventDefault(); nudgeLat(-1);   break;
+    case 'ArrowLeft':  e.preventDefault(); nudgeLon(-1);   break;
+    case 'ArrowRight': e.preventDefault(); nudgeLon(1);    break;
+    case 'a': case 'A': e.preventDefault(); nudgeWidth(-1);  break;
+    case 'd': case 'D': e.preventDefault(); nudgeWidth(1);   break;
+    case 'w': case 'W': e.preventDefault(); nudgeHeight(1);  break;
+    case 's': case 'S': e.preventDefault(); nudgeHeight(-1); break;
+    case 'q': case 'Q': e.preventDefault(); nudgeAngle(-1);  break;
+    case 'e': case 'E': e.preventDefault(); nudgeAngle(1);   break;
+    case ' ':  e.preventDefault(); toggleOverlay(); break;
+    case 'g': case 'G': e.preventDefault(); gridOn = !gridOn; drawGrid(); break;
+    case 'x': case 'X': e.preventDefault(); crosshairOn = !crosshairOn; updateCrosshair(); break;
+  }
+  currentStep = saved;
+});
+
+map.on('zoomend moveend', updateOverlay);
+window.addEventListener('resize', ()=>{ drawGrid(); updateCrosshair(); });
+
+// Draggable panel
+(function makeDraggable(){
+  const panel = document.getElementById('controls');
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+  panel.addEventListener('mousedown', (ev)=>{
+    if (ev.target.tagName==='INPUT'||ev.target.tagName==='BUTTON'||ev.target.closest('.segment')) return;
+    dragging=true; panel.classList.add('dragging');
+    sx=ev.clientX; sy=ev.clientY;
+    const r=panel.getBoundingClientRect(); ox=r.left; oy=r.top;
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
+  function onMove(ev){ if(!dragging) return; panel.style.left=(ox+(ev.clientX-sx))+'px'; panel.style.top=(oy+(ev.clientY-sy))+'px'; panel.style.right='unset'; }
+  function onUp(){ dragging=false; panel.classList.remove('dragging'); window.removeEventListener('mousemove',onMove); window.removeEventListener('mouseup',onUp); }
+})();
+
+updateOverlay();
+</script>
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Harjoituskieltoalueen määrittely</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    #map { height: 100%; }
+
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: white;
+      padding: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      max-width: 330px;
+      user-select: none;
+    }
+    #controls h4 { 
+      margin: 8px 0 6px; 
+      font-size: 13px; 
+      letter-spacing: .2px; 
+      color: #333; 
+    }
+    #controls .row { margin-bottom: 8px; }
+    #controls label { display: inline-block; margin: 3px 0; }
+    #controls input[type="range"], #controls input[type="number"] { width: 150px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      min-height: 46px;
+      padding: 6px 10px;
+      border: 1px solid #cfcfcf;
+      border-radius: 12px;
+      background: #f8f8f8;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+      transition: transform .02s ease, background .2s ease;
+    }
+    .btn:active { transform: translateY(1px); background: #f0f0f0; }
+    .btn.sm { min-width: 36px; min-height: 36px; font-size: 14px; border-radius: 10px; }
+    .btn.wide {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      gap: 8px;
+    }
+    .btn.wide.save { background: #e8f4e8; border-color: #a8d5a8; margin-top: 6px; }
+    .btn.wide.save:active { background: #d0ebd0; }
+    .btn.wide.load { background: #e8f0f8; border-color: #a8c8e8; margin-top: 6px; }
+    .btn.wide.load:active { background: #d0e4f0; }
+    .btn.danger { background: #f8e8e8; border-color: #d5a8a8; color: #8a0000; }
+    .btn.danger:active { background: #ebd0d0; }
+
+    .section {
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #fff;
+    }
+    .pair { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .pair .btn { min-width: 44px; min-height: 44px; }
+    .col { display:flex; flex-direction: column; gap:8px; align-items:flex-start; }
+    .segment { display: inline-flex; border:1px solid #d0d0d0; border-radius: 10px; overflow: hidden; }
+    .segment button { padding: 6px 8px; font-size: 12px; background:#fff; border:0; cursor:pointer; }
+    .segment button+button { border-left:1px solid #d0d0d0; }
+    .segment button.active { background:#222; color:#fff; }
+    .muted { color:#666; font-size:12px; }
+    .checkrow { display:flex; align-items:center; gap:8px; margin-top:6px; }
+    .checkrow input[type="checkbox"] { width:18px; height:18px; cursor:pointer; }
+    .checkrow label { cursor:pointer; }
+    #fileInput { display:none; }
+
+    #markerCounter {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+    
+    #markerList {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 6px;
+    }
+    
+    .marker-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 6px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
+    }
+    
+    .marker-item:last-child {
+      border-bottom: none;
+    }
+    
+    .marker-item .remove-btn {
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+      color: #c62828;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+    
+    .marker-item .remove-btn:hover {
+      background: #ffcdd2;
+    }
+    
+    .instructions {
+      font-size: 11px;
+      color: #888;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    
+    #controls.dragging { opacity: .9; cursor: move; }
+    .basemap-btn.active { background: #222; color: #fff; border-color: #222; }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <div class="section">
+    <h4>Harjoituskieltoalueen markkerit</h4>
+    <button class="btn wide" id="addMarkerBtn">➕ Lisää markkeri (klikkaa karttaa)</button>
+    <button class="btn sm" id="removeLastBtn" title="Poista viimeisin markkeri">↩</button>
+    <button class="btn sm danger" id="clearAllBtn" title="Tyhjennä kaikki markerit">🗑</button>
+    
+    <div id="markerCounter">Markkereita: <span id="markerCount">0</span></div>
+    
+    <div id="markerList"></div>
+    
+    <div class="instructions">
+      Ohje: Klikkaa karttaa lisätäksesi markkerin. Raahaa markkeria hiirellä siirtääksesi sitä. 
+      Markkerit muodostavat sulkeutuvan monikulmion järjestyksessä.
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Tiedoston hallinta</h4>
+    <button class="btn wide save" id="saveFileBtn">💾 Tallenna harjoituskieltoalue.js</button>
+    <button class="btn wide load" id="loadFileBtn">📂 Lataa harjoituskieltoalue.js</button>
+    <input type="file" id="fileInput" accept=".js">
+    <div class="muted" id="fileStatusLabel" style="margin-top:6px;">Valmis</div>
+  </div>
+
+  <div class="section">
+    <h4>Taustakartta</h4>
+    <div id="basemapBtns" style="display:flex; flex-wrap:wrap; gap:6px;">
+      <button class="btn sm basemap-btn active" data-layer="satellite">🛰 Satelliitti (Esri)</button>
+      <button class="btn sm basemap-btn" data-layer="topo">⛰ Maastokartta</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h4>Asetukset</h4>
+    <div class="checkrow">
+      <input type="checkbox" id="showPolygon" checked>
+      <label for="showPolygon">Näytä alueraja</label>
+    </div>
+    <div class="checkrow">
+      <input type="checkbox" id="showMarkers" checked>
+      <label for="showMarkers">Näytä markerit</label>
+    </div>
+    <div class="checkrow">
+      <input type="checkbox" id="closePolygon" checked>
+      <label for="closePolygon">Sulje monikulmio</label>
+    </div>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script>
+// --- Map initialization ---
+const map = L.map('map').setView([60.32, 24.97], 13);
+
+// Tile layer definitions
+const tileLayers = {
+  satellite: L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    { attribution: '© Esri — World Imagery', maxZoom: 19 }
+  ),
+  topo: L.tileLayer(
+    'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    { attribution: '© <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)', maxZoom: 17 }
+  )
+};
+
+let activeBaseLayer = tileLayers.satellite;
+activeBaseLayer.addTo(map);
+
+// Set base layer keys for identification
+tileLayers.satellite._key = 'satellite';
+tileLayers.topo._key = 'topo';
+
+// --- Basemap switcher ---
+document.getElementById('basemapBtns').addEventListener('click', (e) => {
+  const btn = e.target.closest('.basemap-btn');
+  if (!btn) return;
+  const key = btn.dataset.layer;
+  if (!tileLayers[key] || key === activeBaseLayer._key) return;
+  
+  map.removeLayer(activeBaseLayer);
+  activeBaseLayer = tileLayers[key];
+  activeBaseLayer.addTo(map);
+  
+  document.querySelectorAll('.basemap-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+});
+
+// --- Marker management ---
+let markers = [];
+let polygon = null;
+let isAddingMode = false;
+
+// Custom marker icon with index
+function createMarkerIcon(index) {
+  return L.divIcon({
+    className: 'marker-icon',
+    html: `<div style="width:24px; height:24px; border-radius:50%; background:#2196f3; color:white; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:bold;">${index}</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
+}
+
+// Add a new marker at the given latlng
+function addMarker(latlng) {
+  const index = markers.length + 1;
+  const marker = L.marker(latlng, {
+    icon: createMarkerIcon(index),
+    draggable: true,
+    zIndexOffset: 1000
+  }).addTo(map);
+  
+  // Add click handler to remove marker
+  marker.on('click', function(e) {
+    if (e.originalEvent.ctrlKey || e.originalEvent.metaKey) {
+      removeMarker(marker);
+    }
+  });
+  
+  // Add drag handler to update polygon
+  marker.on('dragend', function(e) {
+    updatePolygon();
+    updateMarkerList();
+  });
+  
+  markers.push(marker);
+  
+  updatePolygon();
+  updateMarkerCounter();
+  updateMarkerList();
+  
+  // Center map on first marker
+  if (markers.length === 1) {
+    map.setView(latlng, 14);
+  }
+}
+
+// Remove a specific marker
+function removeMarker(markerToRemove) {
+  const index = markers.indexOf(markerToRemove);
+  if (index === -1) return;
+  
+  map.removeLayer(markerToRemove);
+  markers.splice(index, 1);
+  
+  // Re-index remaining markers
+  markers.forEach((marker, i) => {
+    marker.setIcon(createMarkerIcon(i + 1));
+  });
+  
+  updatePolygon();
+  updateMarkerCounter();
+  updateMarkerList();
+}
+
+// Remove the last marker
+function removeLastMarker() {
+  if (markers.length === 0) return;
+  const lastMarker = markers[markers.length - 1];
+  removeMarker(lastMarker);
+}
+
+// Clear all markers
+function clearAllMarkers() {
+  markers.forEach(marker => map.removeLayer(marker));
+  markers = [];
+  
+  if (polygon) {
+    map.removeLayer(polygon);
+    polygon = null;
+  }
+  
+  updateMarkerCounter();
+  updateMarkerList();
+}
+
+// Update the polygon connecting all markers
+function updatePolygon() {
+  // Remove existing polygon
+  if (polygon) {
+    map.removeLayer(polygon);
+    polygon = null;
+  }
+  
+  const showPolygonSetting = document.getElementById('showPolygon').checked;
+  const showMarkersSetting = document.getElementById('showMarkers').checked;
+  const closePolygonSetting = document.getElementById('closePolygon').checked;
+  
+  // Update marker visibility
+  markers.forEach(marker => {
+    if (showMarkersSetting) {
+      if (!map.hasLayer(marker)) {
+        marker.addTo(map);
+      }
+    } else {
+      if (map.hasLayer(marker)) {
+        map.removeLayer(marker);
+      }
+    }
+  });
+  
+  if (!showPolygonSetting || markers.length < 1) return;
+  
+  // Get coordinates of all markers
+  const latlngs = markers.map(marker => marker.getLatLng());
+  
+  // Create polygon (close it if setting is enabled and we have enough points)
+  const polygonLatLngs = closePolygonSetting && latlngs.length > 2 
+    ? [...latlngs, latlngs[0]] 
+    : latlngs;
+  
+  polygon = L.polyline(polygonLatLngs, {
+    color: '#ff0000',
+    weight: 3,
+    opacity: 0.7,
+    fill: closePolygonSetting && latlngs.length > 2,
+    fillColor: '#ff0000',
+    fillOpacity: 0.2
+  }).addTo(map);
+  
+  // Fit map to show all markers and polygon if we have markers
+  if (markers.length > 0) {
+    const group = new L.featureGroup(markers);
+    if (polygon) {
+      group.addLayer(polygon);
+    }
+    map.fitBounds(group.getBounds().pad(0.5));
+  }
+}
+
+// Update marker counter display
+function updateMarkerCounter() {
+  document.getElementById('markerCount').textContent = markers.length;
+}
+
+// Update marker list in the control panel
+function updateMarkerList() {
+  const markerList = document.getElementById('markerList');
+  markerList.innerHTML = '';
+  
+  markers.forEach((marker, index) => {
+    const latlng = marker.getLatLng();
+    const listItem = document.createElement('div');
+    listItem.className = 'marker-item';
+    
+    const coords = document.createElement('span');
+    coords.textContent = `Piste ${index + 1}: ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+    
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'remove-btn';
+    removeBtn.textContent = 'Poista';
+    removeBtn.onclick = () => removeMarker(marker);
+    
+    listItem.appendChild(coords);
+    listItem.appendChild(removeBtn);
+    markerList.appendChild(listItem);
+  });
+}
+
+// --- Event listeners for controls ---
+document.getElementById('addMarkerBtn').addEventListener('click', function() {
+  isAddingMode = !isAddingMode;
+  this.textContent = isAddingMode ? '✓ Klikkaa karttaa' : '➕ Lisää markkeri (klikkaa karttaa)';
+  this.style.background = isAddingMode ? '#d0ebd0' : '';
+});
+
+document.getElementById('removeLastBtn').addEventListener('click', removeLastMarker);
+document.getElementById('clearAllBtn').addEventListener('click', clearAllMarkers);
+
+// Map click handler for adding markers
+map.on('click', function(e) {
+  if (isAddingMode) {
+    addMarker(e.latlng);
+    isAddingMode = false;
+    document.getElementById('addMarkerBtn').textContent = '➕ Lisää markkeri (klikkaa karttaa)';
+    document.getElementById('addMarkerBtn').style.background = '';
+  }
+});
+
+// Settings change handlers
+document.getElementById('showPolygon').addEventListener('change', updatePolygon);
+document.getElementById('showMarkers').addEventListener('change', updatePolygon);
+document.getElementById('closePolygon').addEventListener('change', updatePolygon);
+
+// --- File handling ---
+
+// Save markers to harjoituskieltoalue.js file
+function saveToFile() {
+  if (markers.length === 0) {
+    alert('Lisää vähintään yksi markkeri ennen tallentamista.');
+    return;
+  }
+
+  // Create the content for harjoituskieltoalue.js
+  const coordinates = markers.map(marker => {
+    const latlng = marker.getLatLng();
+    return `[${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}]`;
+  });
+
+  // Lisätään ensimmäinen piste viimeiseksi sulkemaan alueen
+  if (coordinates.length > 0) {
+    coordinates.push(coordinates[0]);
+  }
+
+  const content = `// Harjoituskieltoalueen koordinaatit
+// Luotu: ${new Date().toLocaleString('fi-FI')}
+// Muokkaa tätä tiedostoa suoraan tai lataa se uudelleen sovelluksessa
+
+const HARJOITUSKIELTOALUE = [
+${coordinates.map(coord => '  ' + coord).join(',\n')}
+];
+`;
+  
+  // Create and download the file
+  const blob = new Blob([content], { type: 'application/javascript' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'harjoituskieltoalue.js';
+  document.body.appendChild(a);
+  a.click();
+  
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 1000);
+  
+  document.getElementById('fileStatusLabel').textContent = 'Tiedosto tallennettu!';
+  setTimeout(() => {
+    document.getElementById('fileStatusLabel').textContent = 'Valmis';
+  }, 2000);
+}
+
+// Load markers from harjoituskieltoalue.js file
+function loadFromFile(file) {
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    const content = e.target.result;
+
+    try {
+      // Extract the array from the file content - accept both lowercase and uppercase variable names
+      const match = content.match(/const\s+(harjoituskieltoalue|HARJOITUSKIELTOALUE)\s*=\s*\[([\s\S]*?)\]\s*;/);
+
+      if (!match) {
+        throw new Error('Tiedostosta ei löytynyt harjoituskieltoalue-muuttujaa');
+      }
+
+      // Parse the array content
+      const arrayContent = `[${match[2]}]`;
+      const coordinates = JSON.parse(arrayContent);
+
+      // Remove duplicate closing point if it exists (same as first point)
+      if (coordinates.length > 1) {
+        const firstPoint = coordinates[0];
+        const lastPoint = coordinates[coordinates.length - 1];
+        if (firstPoint[0] === lastPoint[0] && firstPoint[1] === lastPoint[1]) {
+          coordinates.pop();
+        }
+      }
+      
+      if (!Array.isArray(coordinates)) {
+        throw new Error('Koordinaattien pitää olla taulukko');
+      }
+      
+      // Clear existing markers
+      clearAllMarkers();
+      
+      // Add new markers from the file
+      coordinates.forEach(coord => {
+        if (Array.isArray(coord) && coord.length >= 2) {
+          addMarker(L.latLng(coord[0], coord[1]));
+        }
+      });
+      
+      document.getElementById('fileStatusLabel').textContent = `Ladattu ${coordinates.length} pistettä`;
+      
+      setTimeout(() => {
+        document.getElementById('fileStatusLabel').textContent = 'Valmis';
+      }, 2000);
+      
+    } catch (error) {
+      document.getElementById('fileStatusLabel').textContent = 'Virhe: ' + error.message;
+      setTimeout(() => {
+        document.getElementById('fileStatusLabel').textContent = 'Valmis';
+      }, 3000);
+    }
+  };
+  
+  reader.onerror = function() {
+    document.getElementById('fileStatusLabel').textContent = 'Tiedoston lukeminen epäonnistui';
+    setTimeout(() => {
+      document.getElementById('fileStatusLabel').textContent = 'Valmis';
+    }, 3000);
+  };
+  
+  reader.readAsText(file);
+}
+
+// Event listeners for file operations
+document.getElementById('saveFileBtn').addEventListener('click', saveToFile);
+
+document.getElementById('loadFileBtn').addEventListener('click', function() {
+  document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  if (e.target.files && e.target.files[0]) {
+    loadFromFile(e.target.files[0]);
+    e.target.value = '';
+  }
+});
+
+// --- Draggable control panel ---
+(function makeDraggable(){
+  const panel = document.getElementById('controls');
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+  
+  panel.addEventListener('mousedown', (ev) => {
+    if (ev.target.tagName==='INPUT'||ev.target.tagName==='BUTTON'||ev.target.closest('.segment')||ev.target.closest('#markerList')) return;
+    dragging=true; 
+    panel.classList.add('dragging');
+    sx=ev.clientX; sy=ev.clientY;
+    const r=panel.getBoundingClientRect(); ox=r.left; oy=r.top;
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  });
+  
+  function onMove(ev) {
+    if(!dragging) return; 
+    panel.style.left=(ox+(ev.clientX-sx))+'px'; 
+    panel.style.top=(oy+(ev.clientY-sy))+'px'; 
+    panel.style.right='unset'; 
+  }
+  
+  function onUp() {
+    dragging=false; 
+    panel.classList.remove('dragging'); 
+    window.removeEventListener('mousemove', onMove); 
+    window.removeEventListener('mouseup', onUp); 
+  }
+})();
+
+// Initial update
+updateMarkerCounter();
+updateMarkerList();
+</script>
+</body>
+</html>
